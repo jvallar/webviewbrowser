@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="94.0" prefWidth="285.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="webviewbrowser.controller.ConfirmationFXMLController">
+   <children>
+      <Label fx:id="lblMessage" layoutX="15.0" layoutY="14.0" prefHeight="32.0" prefWidth="254.0" text="Invalid Activation Code!" textAlignment="CENTER" />
+      <Button fx:id="btnLater" layoutX="226.0" layoutY="55.0" mnemonicParsing="false" onAction="#later" text="Later" />
+      <Button fx:id="btnOK" layoutX="186.0" layoutY="55.0" mnemonicParsing="false" onAction="#restart" text="OK" />
+   </children>
+</AnchorPane>

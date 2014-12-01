@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="524.0" prefWidth="379.0" style="-fx-background-color: black;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="webviewbrowser.controller.LocationFXMLController">
+   <children>
+      <VBox layoutX="10.0" layoutY="10.0" prefHeight="465.0" prefWidth="357.0">
+         <children>
+            <Pane layoutX="10.0" layoutY="10.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="125.0" prefWidth="287.0" style="-fx-background-color: black;" AnchorPane.bottomAnchor="7.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="10.0">
+               <children>
+                  <Label layoutX="5.0" layoutY="7.0" text="Saved Locations" textFill="#c5c5c5" />
+                  <ListView fx:id="lstLocation" layoutY="30.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onMouseClicked="#click" prefHeight="92.0" prefWidth="355.0" style="-fx-background-color: black; -fx-border-color: grey;" />
+               </children>
+            </Pane>
+            <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="242.0" style="-fx-background-color: #000000;">
+               <items>
+                  <Button fx:id="btnDelete" mnemonicParsing="false" onAction="#delete" text="Delete" />
+                  <Button fx:id="btnEdit" mnemonicParsing="false" onAction="#edit" text="Edit" />
+                  <Button fx:id="btnApply" mnemonicParsing="false" onAction="#applySave" text="Apply" />
+               </items>
+            </ToolBar>
+            <VBox maxHeight="1.7976931348623157E308" style="-fx-border-color: grey;">
+               <children>
+                  <Pane prefHeight="263.0" prefWidth="355.0" VBox.vgrow="ALWAYS">
+                     <children>
+                        <ToolBar prefHeight="234.0" prefWidth="341.0" style="-fx-background-color: #000000;">
+                           <items>
+                              <VBox prefHeight="224.0" prefWidth="321.0">
+                                 <children>
+                                    <ToolBar prefHeight="40.0" prefWidth="200.0" style="-fx-background-color: #000000;">
+                                       <items>
+                                          <Label prefHeight="17.0" prefWidth="66.0" text="Name:" textFill="#bebebe" />
+                                          <TextField fx:id="txtLocation" prefHeight="25.0" prefWidth="199.0" promptText="Location Name (Optional)" />
+                                       </items>
+                                    </ToolBar>
+                                    <ToolBar style="-fx-background-color: #000000;">
+                                       <items>
+                                          <Label prefHeight="15.0" prefWidth="52.0" text="Latitude:" textFill="#bebebe" />
+                                          <Region prefHeight="30.0" prefWidth="9.0" />
+                                          <TextField fx:id="txtLatitudeD" prefHeight="25.0" prefWidth="35.0" promptText="Deg" />
+                                          <Label text=":" textFill="#bebebe" />
+                                          <TextField fx:id="txtLatitudeM" prefHeight="25.0" prefWidth="35.0" promptText="Min" />
+                                          <Label text=":" textFill="#bebebe" />
+                                          <TextField fx:id="txtLatitudeS" prefHeight="15.0" prefWidth="35.0" promptText="Sec" />
+                                          <ComboBox fx:id="cmbLatitudeDir" prefHeight="25.0" prefWidth="70.0" />
+                                       </items>
+                                    </ToolBar>
+                                    <ToolBar style="-fx-background-color: #000000;">
+                                       <items>
+                                          <Label prefHeight="17.0" prefWidth="65.0" text="Longitude:" textFill="#bebebe" />
+                                          <TextField fx:id="txtLongitudeD" prefHeight="15.0" prefWidth="35.0" promptText="Deg" />
+                                          <Label text=":" textFill="#bebebe" />
+                                          <TextField fx:id="txtLongitudeM" prefHeight="15.0" prefWidth="35.0" promptText="Min" />
+                                          <Label text=":" textFill="#bebebe" />
+                                          <TextField fx:id="txtLongitudeS" prefHeight="15.0" prefWidth="35.0" promptText="Sec" />
+                                          <ComboBox fx:id="cmbLongitudeDir" prefHeight="25.0" prefWidth="70.0" />
+                                       </items>
+                                    </ToolBar>
+                                    <HBox>
+                                       <children>
+                                          <Region prefHeight="23.0" prefWidth="70.0" />
+                                          <Hyperlink onAction="#openFindCoordinatesOnline" text="Find Coordinates Online" />
+                                       </children>
+                                    </HBox>
+                                    <ToolBar style="-fx-background-color: #000000;">
+                                       <items>
+                                          <Label prefHeight="17.0" prefWidth="64.0" text="Time Zone:" textFill="#c5c5c5" />
+                                          <ComboBox fx:id="cmbTimeZone" prefHeight="25.0" prefWidth="201.0" promptText="Time Zone" />
+                                       </items>
+                                    </ToolBar>
+                                    <HBox>
+                                       <children>
+                                          <Region prefHeight="18.0" prefWidth="76.0" />
+                                          <CheckBox fx:id="chkApplyDayLightSaving" mnemonicParsing="false" prefHeight="24.0" prefWidth="234.0" text="Apply Daylight Saving Time rules,  if and" textFill="#c5c5c5" />
+                                       </children>
+                                    </HBox>
+                                    <Label text="                             when applicable to your Time Zone." textFill="#c5c5c5" />
+                                    <HBox>
+                                       <children>
+                                          <Region prefHeight="18.0" prefWidth="9.0" />
+                                          <CheckBox fx:id="chkDefaultLocation" mnemonicParsing="false" prefHeight="23.0" prefWidth="264.0" text="Make this Home location" textFill="#bebebe" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </items>
+                        </ToolBar>
+                     </children>
+                  </Pane>
+               </children>
+            </VBox>
+            <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="242.0" style="-fx-background-color: #000000;">
+               <items>
+                  <Button fx:id="btnSave" mnemonicParsing="false" onAction="#save" text="Save">
+                     <tooltip>
+                        <Tooltip text="Empty Tooltip" />
+                     </tooltip></Button>
+               </items>
+            </ToolBar>
+            <Separator prefWidth="200.0" />
+         </children>
+      </VBox>
+      <Button fx:id="btnClose" layoutX="167.0" layoutY="485.0" mnemonicParsing="false" onAction="#cancel" text="Close" />
+   </children>
+</AnchorPane>

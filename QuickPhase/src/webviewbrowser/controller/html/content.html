@@ -1,0 +1,395 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<!-- // <link rel="stylesheet" href="css.css" type="text/css" /> // -->
+<!-- // <link rel="stylesheet" href="print.css" type="text/css" media="print"> // -->
+
+<style type="text/css">
+
+.helpHeading { font-size:14px; font-weight:bold; color:orange; }
+.helpHeading2 { font-size:13px; font-weight:bold; color:#ffffff; }
+.helpHeading3 { font-size:12px; font-weight:bold; color:#ffffff; }
+
+body, td, p { font-family: tahoma,verdana,arial,sans-serif; font-size: 11px; color:#dddddd; }
+
+.style1 { font-family: tahoma,verdana,arial,sans-serif; font-size: 10px; }
+.style2 { font-family: tahoma,verdana,arial,sans-serif; font-size: 11px; }
+.style3 { font-family: tahoma,verdana,arial,sans-serif; font-size: 12px; }
+.style4 { font-family: tahoma,verdana,arial,sans-serif; font-size: 13px; }
+
+a:link { color: #8FB7FF; text-decoration:none; }
+a:visited { color: #8FB7FF; text-decoration:none; }
+a:hover { color: #8FB7FF; text-decoration:none; }
+
+.mainNav { cursor:hand; color:#8FB7FF; }
+.subNav { cursor:hand; font-size:10px; color:#47669E; padding:2px; padding-left:6px; padding-right:6px; }
+
+.TDLlabel { color:#ffffff; }
+.TDLdata { color:orange; font-weight:bold; }
+.f1FieldStyle { background:#BAC6DA; color:#000000; font-family:tahoma,arial,verdana,sans-serif; font-size:12px; }
+
+.f2Label { color:#666666; }
+.f2FieldStyle { background:#BAC6DA; color:#000000; font-family:tahoma,arial,verdana,sans-serif; font-size:12px; }
+
+.f3FieldStyle { background:#ffffff; color:#000000; font-family:tahoma,arial,verdana,sans-serif; font-size:12px; }
+
+.dayInfoLabel { font-size:11px; color:#D8D7D7; }
+.dayInfoData { color:#CFFECD; }
+
+.calDayInfoLabel { font-size:10px; color:#D8D7D7; }
+.calDayInfoData { color:#FDE698; }
+.calDayInfoDataB { color:#BBD7FD; }
+
+a.calDate:link { color: #ffffff; text-decoration: none; }
+a.calDate:visited { color: #ffffff; text-decoration: none; }
+a.calDate:hover { color: #ffffff; text-decoration: none; }
+
+.calQtr { color:#BBD7FD; }
+a.calQtr:link { color: #ffffff; text-decoration: none; }
+a.calQtr:visited { color: #ffffff; text-decoration: none; }
+a.calQtr:hover { color: #ffffff; text-decoration: none; }
+
+.contentPage {
+	background-color:#000000;
+	background-image:url('bg_s.gif');
+	background-attachment:fixed;
+}
+.contentPage2 {
+	background-color:#ffffff;
+}
+
+select.style1 {
+   font-size:11px;
+   background-color:#294570;
+   color:#ffffff;
+}
+
+.inputBtn {
+	background:#666666;
+	border: 1px solid #ffffff;
+	color:#ffffff;
+	font-size : 11px;
+  	font-family : tahoma,verdana,arial,sans-serif;
+  	font-weight: bold;
+}
+.inputBtn2 {
+	background:#666666;
+	border: 1px solid #999999;
+	color:#000000;
+	font-size : 10px;
+  	font-family : tahoma,verdana,arial,sans-serif;
+}
+.pseudoInputBtn1 {
+	background:#666666;
+	border: 1px solid #ffffff;
+	color:#ffffff;
+	font-size : 10px;
+  	font-family : tahoma,verdana,arial,sans-serif;
+  	font-weight: bold;
+  	padding-left:5px;
+  	padding-right:5px;
+  	cursor:hand;
+}
+.pseudoInputBtn2 {
+	height:11px;
+	background:#222222;
+	border:1px solid #333333;
+	color:#999999;
+	font-size:9px;
+  	font-family:tahoma,verdana,arial,sans-serif;
+  	letter-spacing:.1em;
+  	padding-left:2px;
+  	padding-right:2px;
+  	text-align:center;
+  	cursor:hand;
+}
+
+.border1 {
+	border: 1px solid #9A9999;
+}
+
+.menustyle { position:absolute; left:0; top:0; visibility:hidden; }
+
+.formfield2 { border: 1px solid #000000; background:#ffffff; color:#000000; margin: 0px; font-family:tahoma,arial,verdana,sans-serif; font-size:11px; }
+
+select.style2 {
+   font-size:11px;
+   background-color:#ffffff;
+   color:#000000;
+}
+
+.cal1width { width:400px; }
+.pwidth { width:100%; }
+.palign { align:center; }
+
+</style>
+
+<script language="JavaScript" type="text/javascript">
+ function callDefaultBrowser(url){
+  top.callDefaultBrowser(url);
+ }
+function printContent() {
+	window.external.ActivRun('##PRINT()');
+}
+function write_print_css(pwidth) {
+	//alert(pwidth);
+	document.write(
+		'<style type="text/css" media="print" id="testcss">',
+		'.pwidth { width:'+pwidth+'; }',
+		'</style>'
+	)
+}
+//write_print_css(parent.document.forms.printcontrol.pwidth.value);
+
+var legal_str = 'QuickPhase Single User License Agreement\n\nThis software is licensed for use on ONE COMPUTER, with one exception -- as the owner of any single license number, you may install this software on a strictly limited number of additional personal computers you use, such as a laptop, provided that you are the primary user of the additional computers and will be the only person using this software. Other people wishing to use this software on your additional computers must purchase their own license number(s). BlueMarmot.com reserves the right to limit the number of installations, each of which requires separate "activation". All activations are recorded and linked to a specific license number.'
+
++ '\n\nWhen you downloaded and/or installed this software you agreed to accept the terms of this Agreement. This Agreement is a legal contract, which specifies the terms of the license and warranty limitation between you and BLUEMARMOT.COM. Unless you have a different license agreement obtained from BLUEMARMOT.COM, installation or use of this software indicates your acceptance of the license and warranty limitation terms contained in this Agreement. If you do not agree to the terms of this Agreement, promptly delete and destroy all copies of the software.'
+
++ '\n\nDistributing the software and/or documentation with other products (commercial or otherwise) or by electronic means (i.e., websites, etc) without BLUEMARMOT.COM\'s prior written permission is forbidden. All rights to the BLUEMARMOT.COM software and documentation not expressly granted under this Agreement are reserved to BLUEMARMOT.COM.'
+
++'\n\nDisclaimer of Warranty:'
++ '\nTHIS SOFTWARE AND ACCOMPANYING DOCUMENTATION ARE PROVIDED "AS IS" AND WITHOUT WARRANTIES AS TO PERFORMANCE OF MERCHANTABILITY OR ANY OTHER WARRANTIES WHETHER EXPRESSED OR IMPLIED.   BECAUSE OF THE VARIOUS HARDWARE AND SOFTWARE ENVIRONMENTS INTO WHICH THIS SOFTWARE MAY BE USED, NO WARRANTY OF FITNESS FOR A PARTICULAR PURPOSE IS OFFERED.  THE USER MUST ASSUME THE ENTIRE RISK OF USING THIS PROGRAM.  ANY LIABILITY OF BLUEMARMOT.COM WILL BE LIMITED EXCLUSIVELY TO PRODUCT REPLACEMENT OR REFUND OF PURCHASE PRICE. IN NO CASE SHALL BLUEMARMOT.COM BE LIABLE FOR ANY INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES OR LOSS, INCLUDING, WITHOUT LIMITATION, LOST PROFITS OR THE INABILITY TO USE EQUIPMENT OR ACCESS DATA, WHETHER SUCH DAMAGES ARE BASED UPON A BREACH OF EXPRESS OR IMPLIED WARRANTIES, BREACH OF CONTRACT, NEGLIGENCE, STRICT TORT, OR ANY OTHER LEGAL THEORY. THIS IS TRUE EVEN IF BLUEMARMOT.COM IS ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. IN NO CASE WILL BLUEMARMOT.COM\'S LIABILITY EXCEED THE AMOUNT OF THE LICENSE FEE ACTUALLY PAID BY LICENSEE TO BLUEMARMOT.COM';
+
+</script>
+
+</head>
+
+<body onload="parent.contentReloaded()" class="contentPage" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" bgcolor="#000000" text="#ffffff" link="#696D6A" vlink="#696D6A" alink="#FC8A10" style="scrollbar-base-color:#9B9CAD; scrollbar-highlight-color:#888889; scrollbar-darkshadow-color:#4D1312;scrollbar-shadow-color:#4C4D62;scrollbar-3dlight-color:#ffffff;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td valign="top" align="center" class="palign">
+
+<!-- // MAIN SCREEN // -->
+
+		<div id="main_screen" style="display:none;padding-top:23px"></div>
+
+<!-- // CALENDAR 1 SCREEN // -->
+
+		<div id="cal1_screen" style="display:none;padding-top:23px"></div>
+
+<!-- // CALENDAR 2 SCREEN // -->
+
+		<div id="cal2_screen" style="display:none;padding-top:23px"></div>
+
+<!-- // CALENDAR 3 SCREEN // -->
+
+		<div id="cal3_screen" style="display:none;padding-top:23px"></div>
+
+
+<!-- // FIND SCREEN // -->
+
+		<div id="find_screen" style="display:none;padding-top:23px">
+
+		<script language="Javascript" type="text/javascript">
+		function setFindStart(x)
+		{
+			var obj = document.findform.start;
+			if(x=='now') {
+				obj.value = parent.dtStr2(parent.jdNow(),parent.getSS('dt_format'));
+			} else if(x=='target') {
+				obj.value = parent.dtStr2(parent.getSS('jd'),parent.getSS('dt_format'));
+			}
+		}
+		</script>
+   <table width="100%">
+    <tr>     		
+     <td width="100%" align="right" valign="top" style="padding-right:3px">
+     <div id="calPrintBtns" >
+     <table cellpadding="0" cellspacing="0" border="0">
+      <tr>
+       <td>
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td class="pseudoInputBtn1" onclick="top.showIntervalDialog()">Interval</td><td>&nbsp;</td>
+          <td class="pseudoInputBtn1" onclick="top.findData()">Find</td><td>&nbsp;</td>
+          <td class="pseudoInputBtn1" onclick="parent.exportTests()">Save</td>
+         </tr></table>
+       </td>
+      </tr>
+     </table>
+     </div>
+      
+     </td>
+    </tr>
+  <tr>
+    <td>
+      
+				<div id="find_results" style="position:relative;width:100%;height:100%;padding:0px;overflow:auto;"><hr>Please click Interval or Find button to generate data table</div>
+
+</td>
+  </tr>
+</table>
+		</div>
+
+
+<!-- // CONFIG SCREEN // -->
+
+		<div id="config_screen" style="display:none;padding-top:23px">
+
+		<table width="500" bgcolor="#000000" cellpadding="12" cellspacing="8" border="0" style="border:1px solid #5A5A5B;">
+		<form action="#" method="get" name="configForm" style="margin:0px">
+			<tr>
+				<td colspan="2" align="center" style="border:1px solid #3D3D3D;">
+
+				<table width="450" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td><b>Program Configuration:</b> The settings chosen below will be applied each time QuickPhase is launched (read Help screen for details). Click "Save and Apply" when you are done.</td>
+					</tr>
+				</table>
+				<br />
+				<input type="button" class="inputBtn" name="" value="Save and Apply" onclick="parent.saveConfig();return false;">
+
+				</td>
+			</tr>
+			<tr>
+				<td style="border:1px solid #252525;">
+
+				<table cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td valign="top" nowrap="1">
+				Your Time Zone:<br />
+				<select class="f3FieldStyle" name="fc_tz" id="fc_tz"></select>
+						</td>
+						<td class="style1" style="padding-left:12px;padding-top:10px;color:#999999">
+						This MUST match your computer's Time Zone setting.
+						</td>
+					</tr>
+				</table>
+				<br />
+				<table cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td valign="top" style="padding-right:3px"><input type="checkbox" name="fc_apply_dst" value="yes"></td>
+						<td valign="top"><span class="style1">Apply Daylight Saving Time rules, if and when applicable to your Time Zone. <!-- // <span style="color:#999999">Other Target time zones will ignore DST.</span> // --></span></td>
+					</tr>
+				</table>
+
+				</td>
+				<td rowspan="2" style="border:1px solid #252525;">
+
+				Date Format:<br />
+				<select name="dt_format" class="f3FieldStyle">
+					<option value="mm/dd/yyyy">mm/dd/yyyy
+					<option value="dd/mm/yyyy">dd/mm/yyyy
+				</select><br /><br />
+				Time Format:<br />
+				<select name="clock" class="f3FieldStyle">
+					<option value="12hr">12-hour clock (AM/PM)
+					<option value="24hr">24-hour clock
+				</select><br /><br />
+				Calendars Time of Day:<br />
+				<select name="cal_time" class="f3FieldStyle">
+					<option value="-1">Use Target Time</option>
+					<option value="0">12 AM - Midnight (0:00)</option>
+					<option value="1">1 AM (1:00)</option>
+					<option value="2" selected>2 AM (2:00)</option>
+					<option value="3">3 AM (3:00)</option>
+					<option value="4">4 AM (4:00)</option>
+					<option value="5">5 AM (5:00)</option>
+					<option value="6">6 AM (6:00)</option>
+					<option value="7">7 AM (7:00)</option>
+					<option value="8">8 AM (8:00)</option>
+					<option value="9">9 AM (9:00)</option>
+					<option value="10">10 AM (10:00)</option>
+					<option value="11">11 AM (11:00)</option>
+					<option value="12">12 PM - Noon (12:00)</option>
+					<option value="13">1 PM (13:00)</option>
+					<option value="14">2 PM (14:00)</option>
+					<option value="15">3 PM (15:00)</option>
+					<option value="16">4 PM (16:00)</option>
+					<option value="17">5 PM (17:00)</option>
+					<option value="18">6 PM (18:00)</option>
+					<option value="19">7 PM (19:00)</option>
+					<option value="20">8 PM (20:00)</option>
+					<option value="21">9 PM (21:00)</option>
+					<option value="22">10 PM (22:00)</option>
+					<option value="23">11 PM (23:00)</option>
+				</select><br /><br />
+				Refresh Day View:<br />
+				<select name="refresh" class="f3FieldStyle">
+					<option value="1"> Every second
+					<option value="5"> Every 5 seconds
+					<option value="30"> Every 30 seconds
+					<option value="-1"> Don't refresh
+				</select><br /><br />
+				<input type="checkbox" name="s_hemisphere" value="yes"> Southern Hemisphere moon
+
+				</td>
+			</tr>
+			<tr>
+				<td style="border:1px solid #252525;">
+
+				<table cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td colspan="2" valign="top" class="style1">
+						For sensible calculations, these coordinates should be within the Time Zone setting specified above.
+						</td>
+					</tr>
+					<tr>
+						<td style="padding-top:8px">
+						Your Latitude:<br />
+						<input type="text" name="fc_Lt_d" value="" size="1" class="f3FieldStyle" style="width:20px" maxlength="2" onkeypress="return parent.inputCheck('dig',event)">&nbsp;deg&nbsp;<input type="text" name="fc_Lt_m" value="" size="1" class="f3FieldStyle" style="width:20px" maxlength="2" onkeypress="return parent.inputCheck('dig',event)">&nbsp;min&nbsp;<input type="text" name="fc_Lt_s" value="" size="1" class="f3FieldStyle" style="width:20px" maxlength="2" onkeypress="return parent.inputCheck('dig',event)">&nbsp;sec&nbsp;<select name="fc_Lt_dir" class="f3FieldStyle"><option value="N">N<option value="S">S</select>
+						</td>
+						<td rowspan="2" class="style1" style="padding-left:12px;color:#999999">
+						<a href='javascript:callDefaultBrowser("http://www.calculatorcat.com/latitude_longitude.phtml")' target="_top" style="color:#999999;text-decoration:underline">Find coordinates online</a>
+						</td>
+					</tr>
+					<tr>
+						<td style="padding-top:8px">
+						Your Longitude:<br />
+						<input type="text" name="fc_Lg_d" value="" size="2" class="f3FieldStyle" style="width:27px" maxlength="3" onkeypress="return parent.inputCheck('dig',event)">&nbsp;deg&nbsp;<input type="text" name="fc_Lg_m" value="" size="1" class="f3FieldStyle" style="width:20px" maxlength="2" onkeypress="return parent.inputCheck('dig',event)">&nbsp;min&nbsp;<input type="text" name="fc_Lg_s" value="" size="1" class="f3FieldStyle" style="width:20px" maxlength="2" onkeypress="return parent.inputCheck('dig',event)">&nbsp;sec&nbsp;<select name="fc_Lg_dir" class="f3FieldStyle"><option value="E">E<option value="W" selected>W</select>
+						</td>
+					</tr>
+				</table>
+
+				</td>
+			</tr>
+		</form>
+		</table>
+
+		</div>
+
+
+<!-- // HELP SCREEN // -->
+
+		<div id="help_screen" style="display:none;padding-top:23px">
+
+		<table width="500" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000">
+			<tr>
+				<td>
+		<span class="style3" style="color:#ffffff;font-family:arial,verdana,tahoma;line-height:1.4em">
+ 
+		<table width="100%" cellpadding="15" cellspacing="0" border="0" style="border:1px solid #cdcdcd">
+			<tr>
+				<td>
+		<b>Support</b>
+		<br /><br />
+		For technical support, latest updates, and other information only for users of this program, please <a href='javascript:callDefaultBrowser("http://www.moonconnection.com/quickphase/user/?f=pro")' target="_blank">visit this page</a>.
+		<br /><br />
+		<b>Version</b>
+		<br /><br />
+		QuickPhase Pro, Version 3.3.5
+		<br /><br />
+		<b>Single User License</b>
+		<br /><br />
+		License and Terms were agreed upon during installation (<a href="javascript:alert(legal_str);return false">view here</a>). License and copyright questions: contact BlueMarmot.com
+		<br /><br />
+		<b>Copyright</b>
+		<br /><br />
+		This program Copyright (c)<a href='javascript:callDefaultBrowser("http://www.bluemarmot.com")' target="_blank">BlueMarmot.com</a>/BlueMarmot, Inc. Support and sales at <a href='javascript:callDefaultBrowser("http://www.moonconnection.com")' target="_blank">MoonConnection.com</a>. <!-- // <a href="legal.html">Click here</a> to view the legal/license agreement. // -->
+		<br /><br />
+		</span>
+				</td>
+			</tr>
+		</table>
+		<p/>&nbsp;
+				</td>
+			</tr>
+		</table>
+		</div>
+
+		</td>
+	</tr>
+</table>
+
+</body>
+</html>

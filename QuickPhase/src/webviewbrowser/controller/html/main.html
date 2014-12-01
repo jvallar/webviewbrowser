@@ -1,0 +1,4567 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>QuickPhase Pro</title>
+<meta http-equiv="imagetoolbar" content="no">
+
+<script type="text/javascript">
+ 
+/*+******************************************************************************/
+/*																				*/
+/*										MISC 									*/
+/*																				*/
+/********************************************************************************/
+
+/* --- CONSTANTS, GLOBAL VARS --- */
+// REM: 112 18, 40 30
+var moonImage="";
+var MSPD = 24*60*60*1000;
+var MSPH = 60*60*1000;
+var SEC = 1/24/60/60;
+var MIN = 1/24/60;
+var HR = 1/24;
+
+var SYN = 29.5305882;
+var aDW = new Array( 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday' );
+var aDWs = new Array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+var aM = new Array( 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December' );
+var aMs = new Array( 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' );
+var aPN = new Array('New Moon', 'Waxing Crescent', 'First Quarter Moon', 'Waxing Gibbous', 'Full Moon', 'Waning Gibbous', 'Third Quarter Moon', 'Waning Crescent');
+var aPNs = new Array('NM', '', 'FQ', '', 'FM', '', 'LQ');
+
+//var SetLocMsg = "To calculate moonrise and moonset times or moon position, you must specify latitude and longitude and time zone. Enter this information on the \"Configuration\" screen. Or you may, on a temporary basis, enter this information in the header or footer fields. Click the \"Help\" button for further instructions.";
+
+var SetLocMsg = "To calculate moonrise and moonset times or moon position, you must first specify YOUR locale (latitude, longitude and time zone) on the \"Config\" screen. Then, if desired, you can temporarily specify any other worldwide locale using the fields in the top bar (click the white labels) or in the bottom box (click the little white arrow to open). Click the \"Help\" button for further instructions.";
+
+var LocMsgAlert = '<a href="#" onclick="alert(top.frames.main.SetLocMsg);return false">click here</a>';
+
+var GC = new Date(1582,9,15,0,0,0);
+var GCjd = date_to_JD(1582,10,15);
+
+var aTZh = new Array( -12, -11, -10, -9.5, -9, -8.5, -8, -7, -6, -5, -4, -3.5, -3, -2, -1, 0, 1, 2, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 8, 9, 9.5, 10, 10.5, 11, 11.5, 12, 13 );
+var aTZd = new Array( "-12:00", "-11:00", "-10:00", "-9:30", "-9:00", "-8:30", "-8:00 (PST)", "-7:00 (MST)", "-6:00 (CST)", "-5:00 (EST)", "-4:00 (AST)", "-3:30", "-3:00", "-2:00", "-1:00", "GMT", "+1:00", "+2:00", "+3:00", "+3:30", "+4:00", "+4:30", "+5:00", "+5:30", "+6:00", "+6:30", "+7:00", "+8:00", "+9:00", "+9:30", "+10:00", "+10:30", "+11:00", "+11:30", "+12:00", "+13:00" );
+function make_TZ_options(f,opt1)
+{
+	var idx=0, o;
+	if(opt1) { f.options[0] = opt1; idx=1; }
+	for(var i=0; i<aTZh.length; i++) {
+		o = new Option( aTZd[i], aTZh[i] );
+		f.options[idx] = o;
+  top.addOptions(aTZh[i], aTZd[i] );
+		idx++;
+	}
+}
+
+function LtCheck( Lt_d, Lt_m, Lt_s, from )
+{
+	//alert( from+" Lt_d:"+Lt_d+" Lt_m:"+Lt_m + " Lt_s:"+Lt_s );
+	var ok = true;
+	if( !is_integer(Lt_d) ) { ok = false; }
+	if( !is_integer(Lt_m) ) { ok = false; }
+	if( !is_integer(Lt_s) ) { ok = false; }
+	//alert(ok);
+	return ok;
+}
+function LgCheck( Lg_d, Lg_m, Lg_s, from )
+{
+	//alert( from+" Lg_d:"+Lg_d+" Lg_m:"+Lg_m+" Lg_s:"+Lg_s );
+	var ok = true;
+	if( !is_integer(Lg_d) ) { ok = false; }
+	if( !is_integer(Lg_m) ) { ok = false; }
+	if( !is_integer(Lg_s) ) { ok = false; }
+	//alert(ok);
+	return ok;
+}
+
+function TZinfo(n)
+{
+	for(var i=0; i<aTZh.length; i++) {
+		if(aTZh[i]==n) {
+			return aTZd[i];
+		}
+	}
+	return 'TZinfo error';
+}
+
+
+/* --- TIME & DATE FUNCTIONS --- */
+
+function getTZO(dt)
+{
+	return -dt.getTimezoneOffset()/60;
+}
+//
+// tz = the tz value as currently provided
+// now_tz = current/"now" system offset
+// config_tz = users specification of Windows setting
+// dt = Target date
+// t_tz = Target tz
+// apply_dst = user specification (default "yes")
+//
+function DST_adj2( t_tz, now_tz, config_tz, jd, apply_dst )
+{
+	// user has configured their time zone
+	// it is assumed that this MATCHES their computer, else all this makes no sense
+	if( is_number(config_tz) && (now_tz==config_tz || now_tz==config_tz+1) ) {
+		//alert(1);
+		// Target tz is within (same as) users configured tz
+		if(t_tz==config_tz && apply_dst=="yes") {
+			//alert(2);
+			// Target date is during dst
+			var jdate = JD_to_date(jd);
+			var dt = new Date( jdate['Y'], jdate['M']-1, jdate['D'], jdate['h'], jdate['m'], jdate['s'] );
+			if(config_tz==(getTZO(dt)-1)) {
+				//alert("Orig tz:"+tz+" Adj tz:"+(tz+1));
+				t_tz += 1;
+			}
+		}
+	}
+	return t_tz;
+}
+
+function dtStr(dt,format,delim,jsM)
+{
+	if(!delim) { delim = "/"; }
+	var str="", m;
+	if(jsM) { m=dt.getMonth(); } else { m=dt.getMonth()+1; }
+
+	if(format=='dd/mm/yyyy') {
+		str += dt.getDate()+delim+m+delim+dt.getFullYear();
+	} else if(format=='mm/dd/yyyy') {
+		str += m+delim+dt.getDate()+delim+dt.getFullYear();
+	} else {
+		str += "no format: "+format;
+	}
+	return str;
+}
+function quickDtStr(msdate)
+{
+	return dtStr((new Date(msdate)),'mm/dd/yyyy')+" "+tStr((new Date(msdate)),'24hr');
+}
+function quickDtStr2(jd)
+{
+	return dtStr2(jd,'mm/dd/yyyy')+" "+tStr2(jd,'24hr');
+}
+function dtStr2(o,format,delim)
+{
+	if(is_number(o)) {
+		o = JD_to_date(o);
+	}
+	if(!delim) { delim = "/"; }
+	var str="", m;
+	//if(jsM) { m=o['M']; } else { m=o['M']+1; }
+	//m=o['M'];
+	if(format=='dd/mm/yyyy') {
+		str += o['D']+delim+o['M']+delim+o['Y'];
+	} else if(format=='mm/dd/yyyy') {
+		str += o['M']+delim+o['D']+delim+o['Y'];
+	} else {
+		str += "no format: "+format;
+	}
+	return str;
+}
+function tStr(dt,clock,secs,delim,pad_hr)
+{
+	return hmsStr(dt.getHours(),dt.getMinutes(),dt.getSeconds(),clock,secs,delim,pad_hr);
+}
+function tStr2(o,clock,secs,delim,pad_hr)
+{
+	if(is_number(o)) {
+		o = JD_to_date(o);
+	} 
+	return hmsStr(o['h'],o['m'],o['s'],clock,secs,delim,pad_hr);
+}
+function dStr(d)
+{
+	d = x_to_xms(d);
+	var sign = (d['x']==0 && d['sign']=='-') ? '-' : '';
+	return sign+d['x']+"&deg; "+d['m']+"' "+d['s']+'"';
+}
+function hStr(h,clock,secs,delim,pad_hr)
+{
+	h = x_to_xms(h);
+	return hmsStr(h['x'],h['m'],h['s'],clock,secs,delim,pad_hr);
+}
+function hmsStr(h,m,s,clock,secs,delim,pad_hr)
+{
+	h=h-0, m=m-0, s=s-0;
+	if(!delim) { delim = ":"; }
+	var str="";
+	if(clock=='24hr') {
+		//var m = dt.getMinutes();
+		if(m<10) { m="0"+m; }
+		//var h = dt.getHours();
+		if(h<10) { h="0"+h; }
+		str = h+":"+m;
+		if(secs) {
+			//var s = dt.getSeconds();
+			if(s<10) { s="0"+s; }
+			str += ":"+s
+		}
+	} else if(clock=='12hr') {
+		var a = tI(h,m,s);
+		if(pad_hr && a['h']<10) { a['h']="0"+a['h']; }
+		str = a['h']+":"+a['m'];
+		if(secs) { str += ":"+a['s']; }
+		str += " "+a['ext'];
+	}
+	return str;
+}
+// same as strDt()
+// but with months as 1 to 12
+// and pass-in date using jd
+// and output array elements are Y M D
+function strDt2(str,format,jdateCurr,noAlert)
+{
+	var pattern1 = /^[0-9]{1,2}(\/|\-)[0-9]{1,2}(\/|\-)[0-9]{1,4}$/;
+	var pattern2 = /^[0-9]{1,2}(\/|\-)[0-9]{1,4}$/;
+	var pattern3 = /^[0-9]{1,4}$/;
+	if( !pattern1.test(str) && !pattern2.test(str) && !pattern3.test(str)) {
+		if(!noAlert) {
+			alert( "Invalid date or date format: "+str );
+		}
+		return false;
+	}
+	var parts, a = new Array();
+	//var tmp = new Date(msdateCurr);
+	//var day=tmp.getDate();
+	//var month=tmp.getMonth();
+	//var year=tmp.getFullYear();
+	var tmp = JD_to_date(jdateCurr);
+	var day = tmp['D'];
+	var month = tmp['M'];
+	var year = tmp['Y'];
+	if(str.indexOf('/')==-1) {
+		parts = str.split("-");
+	} else {
+		parts = str.split("/");
+	}
+	if(parts.length==3) {
+		if(format=="mm/dd/yyyy") {
+			month = parts[0];
+			day = parts[1];
+			year = parts[2];
+		} else if(format=="dd/mm/yyyy") {
+			month = parts[1];
+			day = parts[0];
+			year = parts[2];
+		}
+	} else if(parts.length==2) {
+		month = parts[0];
+		year = parts[1];
+	} else if(parts.length==1) {
+		year = parts[0];
+	}
+	a['D']=day-0;
+	a['M']=month-0;
+	a['Y']=year-0;
+	return a;
+}
+function strDt(str,format,msdateCurr)
+{
+	var pattern1 = /^[0-9]{1,2}(\/|\-)[0-9]{1,2}(\/|\-)[0-9]{1,4}$/;
+	var pattern2 = /^[0-9]{1,2}(\/|\-)[0-9]{1,4}$/;
+	var pattern3 = /^[0-9]{1,4}$/;
+	if( !pattern1.test(str) && !pattern2.test(str) && !pattern3.test(str)) {
+		alert( "Invalid date format: "+str );
+		return false;
+	}
+	var parts, a = new Array();
+	var tmp = new Date(msdateCurr);
+	var day=tmp.getDate();
+	var month=tmp.getMonth();
+	var year=tmp.getFullYear();
+	if(str.indexOf('/')==-1) {
+		parts = str.split("-");
+	} else {
+		parts = str.split("/");
+	}
+	if(parts.length==3) {
+		if(format=="mm/dd/yyyy") {
+			month = parts[0]-1;
+			day = parts[1];
+			year = parts[2];
+		} else if(format=="dd/mm/yyyy") {
+			month = parts[1]-1;
+			day = parts[0];
+			year = parts[2];
+		}
+	} else if(parts.length==2) {
+		month = parts[0]-1;
+		year = parts[1];
+	} else if(parts.length==1) {
+		year = parts[0];
+	}
+	a['day']=day;
+	a['month']=month;
+	a['year']=year;
+	return a;
+}
+function strT(str)
+{
+	var pattern1 = /^([0-9]{1,2}\:?){1,3}(\s?[aApP][mM]?){0,1}$/;
+	if( !pattern1.test(str) ) {
+		alert( "Invalid time format: "+str );
+		return false;
+	}
+	var a = new Array();
+	var parts = str.split(":");
+	//if(parts[parts.length-1]=="") { parts.pop(); }
+	var h=0, m=0, s=0, ampm="";
+	if(parts==str) { // no colon
+		//alert('none');
+		h = parseInt(str,10);
+		ampm = amORpm(str);
+	} else if(parts.length==2) { // one colon
+		//alert(2);
+		h = parts[0];
+		m = parseInt(parts[1],10);
+		if(isNaN(m)) { m=0; }
+		ampm = amORpm(parts[1]);
+	} else if(parts.length>=3) { // two colons
+		//alert(3);
+		h = parts[0];
+		m = parts[1];
+		s = parseInt(parts[2],10);
+		if(isNaN(s)) { s=0; }
+		ampm = amORpm(parts[2]);
+	}
+	a['h']=h; a['m']=m; a['s']=s; a['ampm']=ampm;
+	return a;
+}
+function amORpm(str) {
+	if( str.search(/A/i)!=-1 ) { return 'AM'; }
+	if( str.search(/P/i)!=-1 ) { return 'PM'; }
+	return 'noEXT';
+}
+function tI(h, m, s, r)
+{
+	var a = new Array();
+	var tmp = false;
+	if(s || s==0) {
+		if(r) {
+			s = rndN(s,r);
+			tmp = true;
+		}
+		if(s<10) { s="0"+s; }
+		else if(s==60) {
+			s="00";
+			if(m) { m=m-0+1; }
+		}
+		a['s']=s;
+	}
+	if(m || m==0) {
+		if(r && !tmp) {
+			m = rndN(m,r);
+		}
+		if(m<10) { m="0"+m; }
+		else if(m==60) {
+			m="00";
+			if(h) { h=h-0+1; }
+		}
+		a['m']=m;
+	}
+	if(h || h==0) {
+		var tmp = f24h(h);
+		a['h'] = tmp['h'];
+		a['ext'] = tmp['ext'];
+	}
+	return a;
+}
+function t24h(h, ext)
+{
+	if(!ext) { return h; }
+	if(ext.search(/PM/i)!=-1 && h!=12) {
+		h = parseInt(h,10)+12;
+	} else if(ext.search(/AM/i)!=-1 && h==12) {
+		h = 0;
+	}
+	return h;
+}
+function f24h(h)
+{
+	var a = new Array();
+	if(h || h==0) {
+		if(h>=24) { while(h>=24) { h-=24; } }
+		if (h>=12) {
+			h=(h==12)?12:h-12;
+			a['ext']="PM";
+		} else {
+			h=(h==0)?12:h;
+			a['ext']="AM";
+		}
+		a['h'] = h;
+	} else return -1;
+	return a;
+}
+// note: arg input swapped from dateDiff
+// jd1 before (earlier than) jd2
+function JD_dateDiff(jd1,jd2,f)
+{
+	var o = new Object();
+	var x = jd2 - jd1;
+	if(!f || f=='dh') { // days OR hrs
+		if(x<1) {
+			o.x = x*24;
+			o.units = 'hrs';
+		} else {
+			o.x = x;
+			o.units = 'days';
+		}
+	}
+	return o;
+}
+function dateDiff(d1,d2,f)
+{
+	var o = new Object();
+	var x = d1 - d2;
+	if(!f || f=='dh') { // days OR hrs
+		x = x/MSPD;
+		if(x<1) {
+			o.x = x*24;
+			o.units = 'hrs';
+		} else {
+			o.x = x;
+			o.units = 'days';
+		}
+	}
+	return o;
+}
+
+
+/* --- MISC CONVERSION --- */
+
+// -----------------
+//
+//	Takes the day, month, year and hours in the day and returns the
+//  modified julian day number defined as mjd = jd - 2400000.5
+//  checked OK for Greg era dates - 26th Dec 02
+//
+function mjd(day, month, year, hour) {
+	var a, b;
+	if (month <= 2) {
+		month = month + 12;
+		year = year - 1;
+		}
+	a = 10000.0 * year + 100.0 * month + day;
+	if (a <= 15821004.1) {
+		b = -2 + Math.floor((year + 4716)/4) - 1179; //REM: error, changed -2 * to -2 +
+		}
+	else {
+		b = Math.floor(year/400) - Math.floor(year/100) + Math.floor(year/4);
+		}
+	a = 365.0 * year - 679004.0;
+	return (a + b + Math.floor(30.6001 * (month + 1)) + day + hour/24.0);
+}
+//
+// this is the usual days since J2000 function
+//
+function day2000(y, m, d, h) {
+	var d1, b, c, greg;
+	greg = y*10000 + m*100 + d;
+	if (m == 1 || m == 2) {
+		y = y - 1;
+		m = m + 12;
+	}
+	// reverts to Julian calendar before 4th Oct 1582
+	// no good for UK, America or Sweeden!
+	if (greg > 15821004) {
+		a = Math.floor(y/100);
+		b = 2 - a  + Math.floor(a/4) }
+	else {
+		b = 0;
+	}
+	c = Math.floor(365.25 * y);
+	d1 = Math.floor(30.6001 * (m + 1));
+	return (b + c + d1 -730550.5 + d + h/24);
+}
+// --------------
+
+
+function jdNow()
+{
+	var dt = new Date();
+	return date_to_JD( dt.getFullYear(), dt.getMonth()+1, dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds() );
+}
+// ideally, it seems this will only be temporary
+function dt_to_JD(dt)
+{
+	return date_to_JD( dt.getFullYear(), dt.getMonth()+1, dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds() );
+}
+
+function update_JD( jd, Y, M, D, h, m, s )
+{
+	var o = JD_to_date(jd);
+	if(is_number(Y)) { o['Y']=Y; }
+	if(is_number(M)) { o['M']=M; }
+	if(is_number(D)) { o['D']=D; }
+	if(is_number(h)) { o['h']=h; }
+	if(is_number(m)) { o['m']=m; }
+	if(is_number(s)) { o['s']=s; }
+	return dateInfo_to_JD(o);
+}
+// for now, obj is an Array with ymdhms
+function dateInfo_to_JD(o)
+{
+	o['h'] = t24h(o['h'],o['ampm']);
+	return date_to_JD( o['Y'], o['M'], o['D'], o['h'], o['m'], o['s'] );
+}
+function date_to_JD(Y, M, D, h, m, s) {
+
+	if(!Y){Y=0;} if(!M){M=1;} if(!D){D=1;} if(!h){h=0;} if(!m){m=0;} if(!s){s=0;}
+	var h = hms_to_h(h,m,s);
+
+	var d1, b, c, greg;
+	greg = Y*10000 + M*100 + D;
+	if (M == 1 || M == 2) {
+		Y = Y - 1;
+		M = M + 12;
+	}
+	//  reverts to Julian calendar before 4th Oct 1582
+	if (greg > 15821004) {
+		a = Math.floor(Y/100);
+		b = 2 - a  + Math.floor(a/4)
+	} else {
+		b = 0;
+	}
+	c = Math.floor(365.25 * (Y+4716));
+	d1 = Math.floor(30.6001 * (M + 1));
+	return (c + d1 + D + b - 1524.5 + h/24);
+}
+function ___date_to_JD(y, m, d, h) {
+	var d1, b, c, greg;
+	if(!h) { h=0; }
+	greg = y*10000 + m*100 + d;
+	if (m == 1 || m == 2) {
+		y = y - 1;
+		m = m + 12;
+	}
+	//  reverts to Julian calendar before 4th Oct 1582
+	if (greg > 15821004) {
+		a = Math.floor(y/100);
+		b = 2 - a  + Math.floor(a/4)
+	} else {
+		b = 0;
+	}
+	c = Math.floor(365.25 * (y+4716));
+	d1 = Math.floor(30.6001 * (m + 1));
+	return (c + d1 + d + b - 1524.5 + h/24);
+	//return (b + c + d1 -730550.5 + d + h/24); ?
+}
+
+function JD_to_date(jd)
+{
+	jd = jd + 0.5;
+	var Z = intPart(jd);
+	var F = decPart(jd);
+	var a,A,B,C,D,E;
+	var time,day,month,year;
+	if(Z<2299161) {
+		A = Z;
+	} else if(Z>=2299161) {
+		a = intPart((Z-1867216.25)/36524.25);
+		A = Z + 1 + a - intPart(a/4);
+	}
+	B = A + 1524;
+	C = intPart((B-122.1)/365.25);
+	D = intPart(365.25*C);
+	E = intPart((B-D)/30.6001);
+
+	//alert( 'B:'+B+' C:'+C+' D:'+D+' E:'+E );
+
+	day = B - D - intPart(30.6001*E) + F;
+	time = decPart(day)*24;
+	time = h_to_hms(time);
+
+	if(E<14) { month = E-1; }
+	else if(E==14 || E==15) { month = E-13; }
+
+	if( month>2 ) { year = C-4716; }
+	else if( month==1 || month==2 ) { year = C-4715; }
+
+	var date = new Array();
+	date = time;
+	date['D'] = intPart(day);
+	date['M'] = month;
+	date['Y'] = year;
+	date['wd'] = jdWeekday( date['Y'], date['M'], date['D'] );
+ 
+	return date;
+}
+// returns 0 - 6 (Sun - Sat)
+function jdWeekday( Y, M, D )
+{
+	var jd = date_to_JD(Y,M,D);
+	var x = (jd+1.5)%7;
+	return x;
+}
+
+// days, hours, mins, secs to decimal days
+function dhms_to_d(d,h,m,s)
+{
+	d=d-0; h=h-0; m=m-0;
+	return ((((s/60+m)/60)+h)/24)+d;
+}
+// degrees, mins, secs and direction to decimal degrees
+function dms_to_d(d,m,s,dir)
+{
+	//d=d-0; m=m-0;
+	var sign = ( dir=='W' || dir=='S' ) ? -1 : 1;
+	//return (((s/60+m)/60)+d)*sign;
+	return xms_to_x(d,m,s)*sign;
+}
+// hours, mins, secs to decimal hours
+function hms_to_h(h,m,s)
+{
+	h=h-0; m=m-0;
+	return ((s/60+m)/60)+h;
+}
+// transition to this
+// REM: if negative x, put neg sign on all args (x, m, and s)
+function xms_to_x(x,m,s)
+{
+	x=x-0; m=m-0;
+	return ((s/60+m)/60)+x;
+}
+// transition to this
+// also eventually, make this return an object vs array
+function x_to_xms(x,exact)
+{
+	return x_to_ms(x,exact);
+}
+// x is either hours or degrees
+// converts to x, min, sec
+function x_to_ms(x,exact)
+{
+	var a = new Array();
+	var sign = x<0 ? '-' : (x==0?'':'+');
+	var x1 = intPart(x);
+	var m1 = decPart(x)*60;
+	var m = intPart(m1);
+	var s = decPart(m1)*60;
+	if(!exact) { s = rnd(s,0); }
+	if(s==60) {
+		s=0; m=m+1;
+		if(m==60) { m=0; x1=x1+1; }
+	}
+	a['x'] = x1; 
+ a['m']=m; 
+ a['s']=s; 
+ a['sign']=sign;
+	//alert("x:"+a['x']+" m:"+a['m']+" s:"+a['s']);
+ 
+	return a;
+}
+function ___x_to_ms(x,exact)
+{
+	var a = new Array();
+	a['x'] = x; a['m']=0; a['s']=0;
+	var n = x+'';
+	var tmp = n.split("."); if(!tmp[1]) { return a; }
+	a['x'] = tmp[0]; // n
+	n = parseFloat("."+tmp[1])*60+''; // min dec
+	a['m_dec'] = n;
+	tmp = n.split("."); ; if(!tmp[1]) { return a; }
+	a['m'] = tmp[0]; // min
+	n = parseFloat("."+tmp[1])*60+''; // sec dec
+	if(exact) { a['s'] = n; } else { a['s'] = rnd(n,0); }
+	return a;
+}
+function h_to_hms(h)
+{
+	var a = x_to_ms(h);
+	a['h'] = a['x']; 
+	return a;
+}
+/*
+// takes decimal hours and returns a string in hhmm format
+
+function hrsmin(hours) {
+	var hrs, h, m, dum;
+	hrs = Math.floor(hours * 60 + 0.5)/ 60.0;
+	h = Math.floor(hrs);
+	m = Math.floor(60 * (hrs - h) + 0.5);
+	dum = h*100 + m;
+
+	if (dum < 1000) dum = "0" + dum;
+	if (dum <100) dum = "0" + dum;
+	if (dum < 10) dum = "0" + dum;
+	return dum;
+}
+*/
+
+/* --- NUMBERS MANIPULATION / MATH --- */
+
+function pad2(x)
+{
+	if(x<10) { x = ("0"+x); }
+	return x-0;
+}
+function intPart(x) {
+	var a;
+	if (x > 0) {
+		a = Math.floor(x);
+	} else {
+		a = Math.ceil(x);
+	}
+	return a;
+}
+function decPart(x) {
+	var a;
+	a = x - intPart(x);
+	a = Math.abs(a);
+	return a;
+}
+// ipart(x) returns smallest integer nearest zero
+function ipart(x) {
+	var a;
+	if (x> 0) {
+		a = Math.floor(x);
+	} else {
+		a = Math.ceil(x);
+	}
+	return a;
+}
+function frac(x) {
+//
+//	returns the fractional part of x as used in minimoon and minisun
+//
+	var a;
+	a = x - Math.floor(x);
+	if (a < 0) a += 1;
+	return a;
+	}
+//	returns an angle in degrees in the range 0 to 360
+function degAdj(x)
+{
+	var a, b
+	b = x / 360;
+	a = 360 * (b - ipart(b));
+	if (a  < 0 ) {
+		a = a + 360
+		}
+	return a
+	/*
+	if(x>360) {
+		while(x>360) { x -= 360; }
+	} else if(x<0) {
+		while(x<0) { x += 360; }
+	}
+	return x;
+	*/
+}
+//	returns an angle in degrees in the range 0 to 360
+//  a few funcs using this
+function range(x) {
+	var a, b;
+	b = x / 360;
+	a = 360 * (b - ipart(b));
+	if (a < 0 ) {
+		a = a + 360;
+	}
+	return a;
+}
+
+function rnd(val, prec)
+{
+	if(rnd.arguments.length==1)
+		prec=0;
+	val = val * Math.pow(10,prec);
+	val = Math.round(val);
+	val = val / Math.pow(10,prec);
+	return val;
+}
+// same, but shorter
+function round(num, dp) {
+	dp = (!dp ? 0: dp);
+	return Math.round (num * Math.pow(10, dp)) / Math.pow(10, dp);
+}
+function rndN(val, r)
+{
+	if(!r) { return val; }
+	var tmp=val;
+	while(tmp>r) { tmp -= r; }
+	val=val-tmp;
+	if(tmp/r>=0.5) { val=val+r; }
+	return val;
+}
+
+function dsin(x) {
+	return Math.sin(Math.PI / 180 * x)
+}
+function dcos(x) {
+	return Math.cos(Math.PI / 180 * x)
+}
+function dtan(x) {
+	return Math.tan(Math.PI / 180 * x)
+}
+function dasin(x) {
+	return 180/ Math.PI * Math.asin(x)
+}
+function dacos(x) {
+	return 180/ Math.PI * Math.acos(x)
+}
+function datan(x) {
+	return 180/ Math.PI * Math.atan(x)
+}
+// returns arctan in correct quadrant
+function datan2(y, x) {
+	var a;
+	if ((x == 0) && (y == 0)) {
+		return 0;
+	} else {
+		a = datan(y / x);
+		if (x < 0) {
+			a = a + 180;
+		}
+		if (y < 0 && x > 0) {
+			a = a + 360;
+		}
+		return a;
+	}
+}
+
+
+/* --- GENERAL --- */
+
+function inputCheck(x,e)
+{
+	if(!e) { e = event; }
+	var s = String.fromCharCode(e.keyCode);
+	if(x=='date') {
+		if( s.search(/[0-9\/-]/)==-1 ) {
+			return false;
+		}
+	} else if(x=='time') {
+		if( s.search(/[0-9: amp]/i)==-1 ) {
+			return false;
+		}
+	} else if(x=='tz') {
+		if( s.search(/[0-9\.-]/)==-1 ) {
+			return false;
+		}
+	} else if(x=='dig') {
+		return is_integer(s);
+	}
+}
+function is_integer(n)
+{
+	if(!is_number(n)) { return false; }
+	n = Math.abs(n); n=n+"";
+	if( n.search(/^[0-9]+$/)==-1 ) { return false; }
+	return true;
+}
+function is_number(n) {
+	if( isNaN(n) || n==null || n.length==0 ) { return false; }
+	n=n+"";
+	if( n.search(/\s+/)!=-1 ) { return false; } // whitespace
+	return true;
+}
+
+function setSelectedValue(select,val)
+{	for (var i = 0; i < select.options.length; i++)
+	{	
+  if (select.options[i].value==val) {
+		 	select.options.selectedIndex=i;
+		 	break;
+		}
+	}
+}
+
+function getSelectedValue(select)
+{
+	return select.options[select.selectedIndex].value;
+}
+
+function alertOptions(fld)
+{
+	var tmp = '';
+	for(var i=0; i<fld.options.length; i++) {
+		tmp += "\n IDX:"+i+') Value: '+fld.options[i].value;
+		tmp += ' Text: '+fld.options[i].text;
+	}
+	alert(tmp);
+}
+
+function alertv(obj)
+{
+	var str = "";
+	for(var i=0; i<alertv.arguments.length; i++)
+	{
+		str += alertv.arguments[i]+": "+eval(alertv.arguments[i]);
+		str += "\n";
+	}
+}
+
+var alertStopCount = 0;
+var alertStop = 1;
+function alertS(x,stop)
+{
+	//var stopIt = stop?stop:alertStop;
+	if(stop) { alertStop=stop; }
+	if(alertStopCount<alertStop) {
+		alert(x);
+		alertStopCount++;
+	}
+}
+
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*							STARTUP & SETTINGS 									*/
+/*																				*/
+/********************************************************************************/
+
+var sSettings = new Object();
+var cObj; // iframe content obj
+
+function mainInit()
+{
+	//
+	// misc global vars
+	//
+	cObj = frames.iframe_content;
+
+	// activation notice
+	activation_notice();
+
+	//
+	// misc session settings
+	//
+	setSessionSetting( 'jd', jdNow() );
+
+	var system_tz = getTZO(new Date());
+	setSessionSetting('sys_tz',system_tz);
+
+	// for testing:
+	//setSessionSetting('rem_screen',1);
+	//setSessionSetting('jd',GCjd);
+	//setSessionSetting( 'jd', date_to_JD(9999,9,29,12) ); // max top bar width
+	//setSessionSetting( 'jd', date_to_JD(1755,1,11,2) );
+
+	//
+	// save directly to session from program settings
+	//  - if no program setting, use specified default
+	//
+	if(parent.FROM_LEGAL) {
+		initSetting('cV','help_screen');
+	} else {
+		initSetting('cV','main_screen'); // default startup screen
+	}
+	initSetting('cal_time',2);
+	initSetting('dt_format','mm/dd/yyyy');
+	initSetting('clock','12hr');
+	initSetting('refresh',-1);
+	initSetting('tz',system_tz);
+	initSetting('apply_dst',"yes");
+	initSetting('s_hemisphere',"no");
+	//
+	// save directly to session from program settings
+	//
+	initSessionSetting('Lt_d');
+	initSessionSetting('Lt_m');
+	initSessionSetting('Lt_s');
+	initSessionSetting('Lt_dir');
+	initSessionSetting('Lg_d');
+	initSessionSetting('Lg_m');
+	initSessionSetting('Lg_s');
+	initSessionSetting('Lg_dir');
+	initSessionSetting('bM');
+	initSessionSetting('date');
+	initSessionSetting('time');
+
+	startRefresh();
+
+	make_TZ_options(document.forms.bottomForm.f2_tz);
+	make_TZ_options(document.getElementById('f1_tz'));
+
+	loadTDL_fields();
+	makeTDL();
+
+	makeCurrentScreen();
+
+	if(parent.FROM_LEGAL) {
+		bottomMenuDisplay(1);
+	} else {
+		bottomMenuDisplay(getSS('bM'));
+	}
+ 
+ newHandleSetDateTime(getSS("date"), getSS("time"));
+	resizeMain(1);
+
+}
+function initSetting(s,def)
+{
+	var v = top.getProgramSetting(s);
+	if((v=="" || v=='undefined') && !is_integer(v)) {
+		// REM: !is_integer() is to detect '0' which is a valid value (0=="" in javascript)
+		//alert('for setting "'+s+'", using default "'+def+'" (v="'+v+'")');
+		v = def;
+	}
+	setSessionSetting(s,v);
+}
+function initSessionSetting(s)
+{
+	var v = top.getProgramSetting(s);
+	setSessionSetting(s,v);
+}
+function activation_notice()
+{
+	if(top.ACTIVATED) {
+		activationNoticeOn = false;
+		return;
+	} else {
+		var obj = document.getElementById('activationNote');
+		obj.style.display='block';
+		activationNoticeOn = true;
+	}
+}
+
+
+/* ----- PROGRAM SETTINGS (STORED VARS) ----- */
+
+
+function getPS(s) {
+	return top.getProgramSetting(s);
+}
+// always call storePS() after this one
+function setPS(s,v) {
+	setSessionSetting(s,v);
+	top.setProgramSetting(s,v);
+}
+function storePS()
+{
+	top.storeProgramSettings();
+}
+
+
+
+/* ----- CURRENT SETTINGS (SESSION VARS) ----- */
+
+// REM: one use of these functions is to convert strings to numbers!
+
+
+function getSS(s) {
+	return getSessionSetting(s);
+}
+function getSessionSetting( s )
+{
+	var def="", ret;
+	// strings
+	if( s=='cV' || s=='Lt_dir' || s=='Lg_dir' || s=='dt_format' || s=='clock' || s=='apply_dst' || s=='s_hemisphere' ) {
+		var estr = '""+sSettings.'+s;
+		ret = eval( estr );
+		if(ret!='undefined') { return ret; }
+	// numbers
+	} else {
+		var estr = 'sSettings.'+s;
+		ret = eval( estr );
+		if(ret!='undefined' && !isNaN(ret) && ret!="" ) {
+			return ret-0;
+		}
+	}
+	return ret;
+}
+function setSessionSetting( s, v1 ) {
+	var estr = 'sSettings.'+s+'="'+v1+'"';
+	eval( estr );
+	//alert(estr);
+}
+
+
+
+/* ----- SPECIFIC SETTING FUNCTIONS (DATE, LOCATION, ...) ----- */
+
+
+
+function setTarget(jd,noCurr)
+{
+	if(jd=='now') {
+		jd = jdNow();
+	}
+	if(dateLimits(jd)) { return false; }
+	setSessionSetting( 'jd', jd );
+	loadTimeDateFields();
+	makeTDL();
+	tmpStopRefresh = false;
+	if(!noCurr) { makeCurrentScreen(); }
+}
+function setNow(noCurr)
+{
+	setTarget('now');
+}
+function setDateTime(d_str,t_str,noRedraw)
+{
+	if(!d_str && !t_str) {
+		alert( "Error: You must provide a date and/or time." );
+		return false;
+	}
+
+	var jd = getSS('jd');
+	var d_a = new Array(), t_a = new Array();
+	if(d_str) {
+		d_a = strDt2(d_str,getSS('dt_format'),jd);
+	}
+	if(t_str) {
+		t_a = strT(t_str,getSS('clock'));
+	}
+	if(!d_a || !t_a) { return false; }
+
+	if(OctVoid(d_a['Y'],d_a['M'],d_a['D'])) { return false; }
+
+	var h = t24h(t_a['h'],t_a['ampm']);
+	jd = update_JD( jd, d_a['Y'], d_a['M'], d_a['D'], h, t_a['m'], t_a['s'] );
+
+	if(dateLimits(jd)) { return false; }
+	setSessionSetting( 'jd', jd );
+
+	if(!noRedraw) {
+		tmpStopRefresh = false;
+		makeTDL();
+		loadTimeDateFields();
+		makeCurrentScreen();
+	}
+	return true;
+}
+function newHandleSetDateTime(d_str, t_str){
+ setDateTime(d_str,t_str);
+}
+function exportTests(){ 
+	var str = cObj.document.getElementById('find_results').innerHTML;
+// top.sendMessage(str);
+ top.exportCSV(str);
+}
+function generateTable(d_str, t_str){
+ generateTableWithInterval(d_str, t_str, 1);
+}
+function generateTableWithInterval(d_str, t_str, interval) {
+
+  var str ='<table width="100%">';
+  str += '<tr>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Date</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Time</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Timezone</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Latitude</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Longitude</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Phase Name</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Percent of Full</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Age</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Azimuth</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Altitude</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Rise</td>';
+  str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-right:0px;">Set</td>';
+  str += '</tr>';
+  
+  for(i =0; i<30 ; i+=interval){
+    var jd = getSS('jd');
+    var d_a = new Array(), t_a = new Array();
+    if (d_str) {
+      d_a = strDt2(d_str, getSS('dt_format'), jd);
+    }
+    if (t_str) {
+      t_a = strT(t_str, getSS('clock'));
+    }
+    if (!d_a || !t_a) {
+      return false;
+    }
+
+    if (OctVoid(d_a['Y'], d_a['M'], d_a['D'])) {
+      return false;
+    }
+
+    var h = t24h(t_a['h'], t_a['ampm']);
+    var jd = update_JD(jd, d_a['Y'], d_a['M'], d_a['D'], h, t_a['m'], t_a['s'])+i;
+    var rise_azimuth = "", set_azimuth = "";
+    var jdate = JD_to_date(jd);
+    var dy = jdate['D'];
+    var tz = getSS('tz');
+
+    var TZ_dst = DST_adj2(getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst'));
+    var dt_format = getSS('dt_format');
+    var clock = getSS('clock');
+    var Lg = dms_to_d(getSS('Lg_d'), getSS('Lg_m'), getSS('Lg_s'), getSS('Lg_dir'));
+    var Lt = dms_to_d(getSS('Lt_d'), getSS('Lt_m'), getSS('Lt_s'), getSS('Lt_dir'));
+    
+    var e = Ephemeris(jd,TZ_dst);
+    var moon = getPhase(jd, TZ_dst);
+
+    var rs = {rise: LocMsgAlert, set: LocMsgAlert};
+    var H = new Object();
+    var azimuth = LocMsgAlert, altitude = LocMsgAlert, az_dec = "", alt_dec = "";
+    if (
+     LtCheck(getSS('Lt_d'), getSS('Lt_m'), getSS('Lt_s'))
+     &&
+     LgCheck(getSS('Lg_d'), getSS('Lg_m'), getSS('Lg_s'))
+     &&
+     is_number(getPS('tz'))
+     ) {
+      rs = getRiseSet(jd, TZ_dst, Lg, Lt, getSS('clock')); // rem: dt is used to get mjd (just passes in generic y m d h)
+      // rise pos
+      if (rs.rise_dec) {
+        var tmpDt = x_to_xms(rs.rise_dec);
+        var tmpJD = date_to_JD(jdate['Y'], jdate['M'], jdate['D'], tmpDt['x'], tmpDt['m'], tmpDt['s']);
+        var tmp_e = Ephemeris(tmpJD, TZ_dst);
+        var rise_H = Horizon(tmp_e.MoonRa, tmp_e.MoonDec, tmpJD, TZ_dst, Lg, Lt);
+        rise_azimuth = " at " + rnd(rise_H.az, 0) + "&deg";
+      }
+      if (rs.set_dec) {
+        var tmpDt = x_to_xms(rs.set_dec);
+        var tmpJD = date_to_JD(jdate['Y'], jdate['M'], jdate['D'], tmpDt['x'], tmpDt['m'], tmpDt['s']);
+        var tmp_e = Ephemeris(tmpJD, TZ_dst);
+        var set_H = Horizon(tmp_e.MoonRa, tmp_e.MoonDec, tmpJD, TZ_dst, Lg, Lt);
+        set_azimuth = " at " + rnd(set_H.az, 0) + "&deg;";
+      }
+      H = Horizon(e.MoonRa, e.MoonDec, jd, TZ_dst, Lg, Lt);
+      azimuth = dStr(H.az);
+      az_dec = rnd(H.az, 4);
+      altitude = dStr(H.alt);
+      alt_dec = rnd(H.alt, 4);
+    }
+    
+    var qArray = Quarters(jd);
+    var prevNM = fetchPrevNM(qArray,jd);
+    var age = getAge(prevNM.jd,jd);
+    var s_h = (getSS('s_hemisphere')=="yes")?"_s":"";
+    var dateStr = dtStr2(jd, dt_format);
+    var timeStr = tStr2(jd, clock);
+    var phase_name = aPN[phN(moon.D)];
+    var percent_of_full = rnd(moon.phase, 0);
+    var age = rnd(moon.age, 0) + '% (' + age.d + ' days ' + age.h + ' hrs ' + pad2(age.m) + ' mins)';
+    var rise = rs.rise + rise_azimuth;
+    var set = rs.set + set_azimuth;
+  
+    str += '<tr>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + dateStr + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + timeStr + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + TZinfo(getSS('tz')) + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + getSS('Lt_d')+"&deg; "+getSS('Lt_m')+"' "+getSS('Lt_s')+'" '+getSS('Lt_dir') + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + getSS('Lg_d')+"&deg; "+getSS('Lg_m')+"' "+getSS('Lg_s')+'" '+getSS('Lg_dir') + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + phase_name + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + percent_of_full + '%</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + age + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + azimuth + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + altitude + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + rise + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' + set + '</td>';
+    str += '</tr>';
+  } 
+
+ str +='</table>';
+	var obj = cObj.document.getElementById('find_results');
+ obj.innerHTML = str;
+}
+
+function handleSetDateTime(d_id,t_id,lyr_id)
+{
+	var d_str = document.getElementById(d_id).value;
+	var t_str = document.getElementById(t_id).value;
+	var res = setDateTime(d_str,t_str);
+	if(res) {
+		hide_f1(lyr_id);
+	} else {
+		var jdate = JD_to_date(getSS('jd'));
+		document.getElementById(d_id).value = dateFieldFormat(jdate);
+		document.getElementById(t_id).value = timeFieldFormat(jdate);
+	}
+}
+function BackNext(unit,x)
+{
+	var jd = getSS('jd');
+	if(unit=='h') {
+		if(x=='back') { jd -= HR; }
+		else if(x=='next') { jd += HR; }
+		jd = update_JD(jd);
+
+	} else if(unit=='d') {
+		if(x=='back') { jd -= 1; }
+		else if(x=='next') { jd += 1; }
+		jd = update_JD(jd);
+
+	} else if(unit=='m') {
+		var jdate = JD_to_date(jd);
+		var m = jdate['M'];
+		var y = jdate['Y'];
+		if(x=='back') {
+			if(m==1) { m=12; y=y-1; } else { m=m-1; }
+		} else if(x=='next') {
+			if(m==12) { m=1; y=y+1; } else { m=m+1; }
+		}
+		jd = update_JD( jd, y, m );
+	}
+	if(dateLimits(jd)) { return false; }
+	setSessionSetting( 'jd', jd );
+	makeCurrentScreen();
+	makeTDL();
+	loadTimeDateFields();
+}
+function dateLimits(jd)
+{
+	var jdate = JD_to_date(jd);
+	if(jdate['Y']<0 || jdate['Y']>9999) {
+		alert( "Date out of range." );
+		//setTarget('now');
+		return true;
+	}
+	return false;
+}
+function OctVoid( Y, M, D )
+{
+	if(Y==1582 && M==10 && (D>4 && D<15)) {
+		alert( "That date doesn't exist. Take a look at \nthe October 1582 calendar ..." );
+		setSessionSetting( 'jd', GCjd );
+		makeTDL();
+		loadTimeDateFields();
+		makeScreen('cal1_screen');
+		tmpStopRefresh = false;
+		return true;
+	}
+	return false;
+}
+function newSetLoc(){		
+  setSessionSetting( 'Lg_d', getPS('Lg_d') );
+		setSessionSetting( 'Lg_m', getPS('Lg_m') );
+		setSessionSetting( 'Lg_s', getPS('Lg_s') );
+		setSessionSetting( 'Lg_dir', getPS('Lg_dir') );
+  setSessionSetting( 'Lt_d', getPS('Lt_d') );
+		setSessionSetting( 'Lt_m', getPS('Lt_m') );
+		setSessionSetting( 'Lt_s', getPS('Lt_s') );
+		setSessionSetting( 'Lt_dir', getPS('Lt_dir') );
+		setSessionSetting( 'tz', getPS('tz') );
+  
+ tmpStopRefresh = false;
+ makeCurrentScreen();
+ makeTDL();
+ loadTDL_fields();  
+}
+// x is top form
+function setLoc(x)
+{
+	if(x) {
+		var f = document.forms.topTDLform;
+		var tmp = 'f1';
+	} else {
+		var f = document.forms.bottomForm;
+		var tmp = 'f2';
+		setSessionSetting( 'tz', getSelectedValue(f[tmp+'_tz']) );
+	}
+	var Lt_d = f[tmp+'_Lt_d'].value;
+	var Lt_m = f[tmp+'_Lt_m'].value;
+	var Lt_s = f[tmp+'_Lt_s'].value;
+	var Lt_dir = getSelectedValue(f[tmp+'_Lt_dir']);
+	//if( Lt_d || Lt_m || Lt_s ) {
+		setSessionSetting( 'Lt_d', Lt_d?Lt_d:0 );
+		setSessionSetting( 'Lt_m', Lt_m?Lt_m:0 );
+		setSessionSetting( 'Lt_s', Lt_s?Lt_s:0 );
+		setSessionSetting( 'Lt_dir', Lt_dir );
+	//}
+	var Lg_d = f[tmp+'_Lg_d'].value;
+	var Lg_m = f[tmp+'_Lg_m'].value;
+	var Lg_s = f[tmp+'_Lg_s'].value;
+	var Lg_dir = getSelectedValue(f[tmp+'_Lg_dir']);
+	//if( Lg_d || Lg_m || Lg_s ) {
+		setSessionSetting( 'Lg_d', Lg_d?Lg_d:0 );
+		setSessionSetting( 'Lg_m', Lg_m?Lg_m:0 );
+		setSessionSetting( 'Lg_s', Lg_s?Lg_s:0 );
+		setSessionSetting( 'Lg_dir', Lg_dir );
+	//}
+
+	tmpStopRefresh = false;
+	makeCurrentScreen();
+	makeTDL();
+	loadTDL_fields();
+}
+function setTZ(tz,x)
+{
+	setSessionSetting( 'tz', tz );
+	tmpStopRefresh = false;
+	makeCurrentScreen();
+	makeTDL();
+	loadTDL_fields();
+}
+
+function saveConfig()
+{
+	var f = cObj.document.forms.configForm;
+	var nothing = true;
+
+	var prev_dt_format = getSS('dt_format');
+
+	setPS( 'dt_format', getSelectedValue(f.dt_format) );
+	setPS( 'clock', getSelectedValue(f.clock) );
+	setPS( 'cal_time', getSelectedValue(f.cal_time));
+	setPS( 'refresh', getSelectedValue(f.refresh));
+	setPS( 's_hemisphere', f.s_hemisphere.checked?"yes":"no" );
+	//storePS();
+
+	if( f.fc_Lt_d.value=="" && f.fc_Lt_m.value=="" && f.fc_Lt_s.value=="" ) {
+		// do nothing
+	} else {
+		nothing = false;
+		setPS( 'Lt_d', f.fc_Lt_d.value?f.fc_Lt_d.value:0 );
+		setPS( 'Lt_m', f.fc_Lt_m.value?f.fc_Lt_m.value:0 );
+		setPS( 'Lt_s', f.fc_Lt_s.value?f.fc_Lt_s.value:0 );
+		setPS( 'Lt_dir', getSelectedValue(f.fc_Lt_dir) );
+	}
+	if( f.fc_Lg_d.value=="" && f.fc_Lg_m.value=="" && f.fc_Lg_s.value=="" ) {
+		// do nothing
+	} else {
+		nothing = false;
+		setPS( 'Lg_d', f.fc_Lg_d.value?f.fc_Lg_d.value:0 );
+		setPS( 'Lg_m', f.fc_Lg_m.value?f.fc_Lg_m.value:0 );
+		setPS( 'Lg_s', f.fc_Lg_s.value?f.fc_Lg_s.value:0 );
+		setPS( 'Lg_dir', getSelectedValue(f.fc_Lg_dir) );
+	}
+	var config_tz = getSelectedValue(f.fc_tz);
+	if( config_tz!="none" ) {
+		nothing = false;
+		setPS( 'tz', config_tz );
+	}
+	if(nothing) {
+		//alert( "Please choose your time zone and latitude/longitude." );
+	}
+
+	setPS( 'apply_dst', f.fc_apply_dst.checked?"yes":"no" );
+
+	storePS();
+
+	makeCurrentScreen();
+	loadTDL_fields();
+	makeTDL();
+	redrawFindScreen(prev_dt_format);
+	startRefresh();
+}
+
+function f1Focus(obj)
+{
+	tmpStopRefresh = true;
+	return;
+
+	var bg = obj.style.backgroundColor;
+	//if(bg=='') { obj.select(); }
+	//if(obj.id=='f1_tz') { obj.focus(); }
+	if(bg=='orange') {
+		obj.style.backgroundColor = '';
+	} else {
+		obj.style.backgroundColor = 'orange';
+	}
+}
+function f2Focus(obj)
+{
+	tmpStopRefresh = true;
+	return;
+
+	var bg = obj.style.backgroundColor;
+	//if(bg=='') { obj.select(); }
+	if(bg=='orange') {
+		obj.style.backgroundColor = '';
+		tmpStopRefresh = false;
+	} else {
+		obj.style.backgroundColor = 'orange';
+	}
+}
+function f2ToggleChangedColor(obj)
+{
+	var bgc = obj.style.backgroundColor;
+	obj.style.backgroundColor = (bgc=='#B2BFE4'?'#ffffff':'#B2BFE4');
+}
+function f2ToggleChangedColorsOff()
+{
+	var f = document.forms.bottomForm;
+	for(var i=0; i<f.elements.length; i++) {
+		if(f.elements[i].style.backgroundColor=='#B2BFE4') {
+			alert();
+		}
+	}
+}
+
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*						DISPLAY CONTROL: VIEWS & SCREENS						*/
+/*																				*/
+/********************************************************************************/
+
+function dateFormat1(jdate)
+{
+	return aDW[jdate['wd']]+", "+aM[jdate['M']-1]+" "+jdate['D']+", "+jdate['Y'];
+}
+function timeFormat1(jdate)
+{
+	return tStr2(jdate,getSS('clock'),1);
+}
+function dateFieldFormat(jdate)
+{
+	return dtStr2(jdate,getSS('dt_format'));
+}
+function timeFieldFormat(jdate)
+{
+	return tStr2(jdate,getSS('clock'));
+}
+function makeTDL()
+{
+	var html = "", obj;
+
+	// target
+	var jd = getSS('jd');
+	// date
+	var jdate = JD_to_date(jd);
+	var date = dateFormat1(jdate);
+	var time = timeFormat1(jdate);
+	obj = document.getElementById('TDLdateTxt');
+	obj.innerHTML = date+'&nbsp;&nbsp;'+time;
+
+	// location
+	var Lt="";
+	var Lg="";
+	var not_set = '<span style="font-weight:normal">not set</span>';
+	var loc = not_set;
+	if( LtCheck( getSS('Lt_d'),getSS('Lt_m'),getSS('Lt_s'),'makeTDL()' ) ) {
+		Lt = getSS('Lt_d')+"&deg; "+getSS('Lt_m')+"' "+getSS('Lt_s')+'" '+getSS('Lt_dir');
+	}
+	if( LgCheck( getSS('Lg_d'),getSS('Lg_m'),getSS('Lg_s'),'makeTDL()' ) ) {
+		Lg = getSS('Lg_d')+"&deg; "+getSS('Lg_m')+"' "+getSS('Lg_s')+'" '+getSS('Lg_dir');
+	}
+	if(Lt || Lg) {
+		if(!Lt) { Lt=not_set; }
+		if(!Lg) { Lg=not_set; }
+		loc = Lt+'&nbsp;<span style="color:#444444">|</span>&nbsp;'+Lg;
+	}
+
+	obj = document.getElementById('TDL_loc_Txt');
+	obj.innerHTML = loc;
+
+	// time zone
+	var tz = TZinfo(getSS('tz'));
+	obj = document.getElementById('TDLtzTxt');
+	obj.innerHTML = tz;
+
+}
+function loadTDL_fields()
+{
+	loadTimeDateFields();
+
+	setSelectedValue(document.forms.bottomForm.f2_tz,getSS('tz'));
+	setSelectedValue(document.getElementById('f1_tz'),getSS('tz'));
+
+	document.forms.bottomForm.f2_Lt_d.value = getSS('Lt_d');
+	document.forms.bottomForm.f2_Lt_m.value = getSS('Lt_m');
+	document.forms.bottomForm.f2_Lt_s.value = getSS('Lt_s');
+	setSelectedValue( document.forms.bottomForm.f2_Lt_dir, getSS('Lt_dir') );
+	document.getElementById('f1_Lt_d').value = getSS('Lt_d');
+	document.getElementById('f1_Lt_m').value = getSS('Lt_m');
+	document.getElementById('f1_Lt_s').value = getSS('Lt_s');
+	setSelectedValue( document.getElementById('f1_Lt_dir'), getSS('Lt_dir') );
+
+	document.forms.bottomForm.f2_Lg_d.value = getSS('Lg_d');
+	document.forms.bottomForm.f2_Lg_m.value = getSS('Lg_m');
+	document.forms.bottomForm.f2_Lg_s.value = getSS('Lg_s');
+	setSelectedValue( document.forms.bottomForm.f2_Lg_dir, getSS('Lg_dir') );
+	document.getElementById('f1_Lg_d').value = getSS('Lg_d');
+	document.getElementById('f1_Lg_m').value = getSS('Lg_m');
+	document.getElementById('f1_Lg_s').value = getSS('Lg_s');
+	setSelectedValue( document.getElementById('f1_Lg_dir'), getSS('Lg_dir') );
+}
+function loadTimeDateFields()
+{
+	var jdate = JD_to_date(getSS('jd'));
+
+	var str = dateFieldFormat(jdate);
+	document.forms.bottomForm.f2_date.value = str;
+	document.getElementById('f1_date').value = str;
+
+	var str = timeFieldFormat(jdate);
+	document.forms.bottomForm.f2_time.value = str;
+	document.getElementById('f1_time').value = str;
+}
+var curr_f1;
+function show_f1(id)
+{
+	tmpStopRefresh = true;
+	if(curr_f1) { hide_f1(curr_f1); }
+	var obj = document.getElementById(id);
+//	obj.style.visibility="visible";
+	curr_f1 = id;
+ top.showConfigDialog(id);
+}
+function hide_f1(id)
+{
+	var obj = document.getElementById(id);
+	obj.style.visibility="hidden";
+}
+
+
+
+/* ----- VIEWS / SCREENS ----- */
+
+
+function assignNewView(v)
+{
+	// hide current
+	var currView = getSS('cV');
+	var obj = cObj.document.getElementById(currView);
+	obj.style.visibility = 'hidden';
+	obj.style.display = 'none';
+	// show new
+	obj = cObj.document.getElementById(v);
+	obj.style.visibility = 'visible';
+	obj.style.display = 'block';
+
+	// hide/show calendar submenu
+	if(v=='cal1_screen' || v=='cal2_screen' || v=='cal3_screen' || v=='cal_test_screen') {
+		if(v=='cal1_screen') {
+			hidePrintBtns();
+		} else {
+			showPrintBtns();
+		}
+		hideCalDayInfo();
+		showCalMenu();
+		resizeMain(1);
+	} else {
+		hidePrintBtns();
+		hideCalMenu();
+		resizeMain(1);
+	}
+	if(v=='cal2_screen' || v=='cal3_screen') {
+		cObj.document.body.className = 'contentPage2';
+	} else {
+		cObj.document.body.className = 'contentPage';
+	}
+
+	// set/save view
+	if(getSS('rem_screen')) { // right now, just for testing
+		setPS('cV',v);
+		storePS();
+	} else {
+		setSessionSetting('cV',v);
+	}
+
+}
+function printHtml(){
+ var currView = getSS('cV');
+ var str = cObj.document.getElementById(currView).innerHTML;
+ 
+ top.printWebView(str, currView);
+}
+function exportCSV(){
+ var currView = getSS('cV');
+ var str = cObj.document.getElementById(currView).innerHTML;
+ 
+ top.exportCSV(str);
+}
+// called after setting a new time/date/config/etc
+function makeCurrentScreen()
+{
+	var currView = getSS('cV');
+	makeScreen(currView);
+}
+function makeScreen(screen)
+{
+	if(screen=='main_screen') {
+		makeMainScreen();
+	} else if(screen=='cal1_screen') {
+		makeCal1Screen();
+	} else if(screen=='cal2_screen') {
+		makeCal2Screen();
+	} else if(screen=='cal3_screen') {
+		makeCal3Screen();
+	} else if(screen=='cal_test_screen') {
+		makeCalTestScreen();
+	} else if(screen=='config_screen') {
+		makeConfigScreen();
+	} else if(screen=='find_screen') {
+		makeFindScreen();
+	} else if(screen=='help_screen') {
+		makeHelpScreen();
+	} else if(screen=='print_screen') {
+		printHtml();
+	}else if(screen=='export_screen') {
+		exportCSV();
+	}
+	if(screen=='config_screen') {
+		bottomMenuDisplay(0);
+	} else {
+		bottomMenuDisplay(getSS('bM'));
+	}
+ 
+}
+function rotateAllMoon(degrees)
+{
+ var canvases = cObj.document.getElementsByTagName('canvas');
+  for(i = 0;i < canvases.length; i++){
+   var canvas = canvases[i];
+   var base_image = new Image();
+   base_image.src = canvas.innerHTML; 
+   drawRotated(base_image,degrees,canvas);
+ }
+}
+
+function rotateMoon(degrees)
+{
+ var canvas = cObj.document.getElementById('viewportcanvas');
+  var base_image = new Image();
+  base_image.src = moonImage;
+  drawRotated(base_image,degrees,canvas);
+  
+}
+function drawRotated(image, degrees, canvas){ 
+  image.onload = function(){  
+   var context = canvas.getContext('2d');
+   context.save();
+   context.clearRect(0,0,canvas.width,canvas.height);
+   context.translate(canvas.width/2,canvas.height/2);
+   context.rotate(degrees*Math.PI/180);
+   context.drawImage(image,-canvas.width/2,-canvas.height/2, canvas.width, canvas.height);
+   context.fillStyle = "#000000";
+   context.restore();
+  }
+ }
+function makeMainScreen()
+{
+	assignNewView('main_screen');
+	var str = getMainScreen();
+	var obj = cObj.document.getElementById('main_screen');
+	obj.innerHTML = str;
+// var image =  cObj.document.getElementById('viewportimage');
+// image.style.visibility = "hidden";
+ rotateMoon(30);
+}
+var intervalID;
+function startRefresh()
+{
+	if(intervalID) {
+		clearInterval(intervalID);
+	}
+	var tx = getSS('refresh')*1000;
+	// REM: the -1 (no refresh) causes no error, does no refresh; this is just-in-case
+	if(tx<0) { return; }
+	intervalID = setInterval('doRefresh()',tx);
+}
+var tmpStopRefresh = false;
+function doRefresh()
+{
+	var tx = getSS('refresh')*SEC;
+	var jd = getSS('jd')+tx;
+
+	if(dateLimits(getSS('jd'))) {
+		setTarget('now');
+		return false;
+	}
+	setSessionSetting( 'jd', jd );
+
+	// redraw/reload on condition...
+	if(tmpStopRefresh) { return false; }
+	if(getSS('cV')=='main_screen') {
+		makeScreen('main_screen');
+	}
+	makeTDL();
+	loadTimeDateFields();
+}
+function makeCal1Screen()
+{
+	assignNewView('cal1_screen');
+	var str = getCal1Screen();
+	var obj = cObj.document.getElementById('cal1_screen');
+	obj.innerHTML = str;
+ rotateAllMoon(30);
+}
+function makeCal2Screen()
+{
+	assignNewView('cal2_screen');
+	var str = getCal2Screen();
+	var obj = cObj.document.getElementById('cal2_screen');
+	obj.innerHTML = str;
+ rotateAllMoon(30);
+}
+function makeCal3Screen()
+{
+	assignNewView('cal3_screen');
+	var str = getCal3Screen();
+	var obj = cObj.document.getElementById('cal3_screen');
+	obj.innerHTML = str;
+ rotateAllMoon(30);
+}
+function makeCalTestScreen()
+{
+	assignNewView('cal_test_screen');
+}
+function showCalMenu()
+{
+	var obj = document.getElementById('calmenu');
+	var obj2 = document.getElementById('calDayInfoContainer');
+	obj.style.display = "block";
+	obj2.style.display = "block";
+	obj.style.visibility = "visible";
+	obj2.style.visibility = "visible";
+	calendarMenuOn = true;
+}
+function hideCalMenu()
+{
+	var obj = document.getElementById('calmenu');
+	var obj2 = document.getElementById('calDayInfoContainer');
+	obj.style.display = "none";
+	obj2.style.display = "none";
+	calendarMenuOn = false;
+}
+function showPrintBtns()
+{
+	var obj = document.getElementById('calPrintBtns');
+	obj.style.display = "block";
+}
+function hidePrintBtns()
+{
+	var obj = document.getElementById('calPrintBtns');
+	obj.style.display = "none";
+}
+
+function makeConfigScreen()
+{
+ top.showDateFormatDialog();
+//	var tmp;
+//
+//	assignNewView('config_screen');
+//
+//	var f = cObj.document.forms.configForm;
+//
+//	// preferences
+//	if(!(tmp=getPS('dt_format'))) { tmp=getSS('dt_format'); }
+//	setSelectedValue(f.dt_format,tmp);
+//	if(!(tmp=getPS('clock'))) { tmp=getSS('clock'); }
+//	setSelectedValue(f.clock,tmp);
+//	if(!(tmp=getPS('cal_time'))) { tmp=getSS('cal_time'); }
+//	setSelectedValue(f.cal_time,tmp);
+//	if(!(tmp=getPS('refresh'))) { tmp=getSS('refresh'); }
+//	setSelectedValue(f.refresh,tmp);
+
+
+	// old tz options limit to 3
+	/*
+	var tz_idx2;
+	for(var i=0; i<aTZh.length; i++) {
+		if(aTZh[i]==getSS('sys_tz')) {
+			tz_idx2 = i;
+			break;
+		}
+	}
+	var tz_idx1 = ( tz_idx2==0 ? aTZh.length-1 : tz_idx2-1 );
+	var tz_idx3 = ( tz_idx2==aTZh.length-1 ? 0 : tz_idx2+1 );
+	f.fc_tz.options[0] = new Option( "", "none" );
+	f.fc_tz.options[1] = new Option( aTZd[tz_idx1], aTZh[tz_idx1] );
+	f.fc_tz.options[2] = new Option( aTZd[tz_idx2], aTZh[tz_idx2] );
+	f.fc_tz.options[3] = new Option( aTZd[tz_idx3], aTZh[tz_idx3] );
+	*/
+	// all time zones
+	var opt1 = new Option( "", "none" );
+	make_TZ_options(f.fc_tz,opt1);
+	setSelectedValue( f.fc_tz, "4" );
+	if( !is_number(getPS('tz')) ) { 
+  tmp="none"; 
+ }else{
+  tmp=getPS('tz');
+ }// not tmp=getSS('sys_tz');
+//	setSelectedValue( f.fc_tz, tmp );
+
+	// dst
+	if(!(tmp=getPS('apply_dst'))) { tmp=getSS('apply_dst'); }
+	if(tmp=="yes") { f.fc_apply_dst.checked = true; }
+
+	// southern hemisphere
+	if(!(tmp=getPS('s_hemisphere'))) { tmp=getSS('s_hemisphere'); }
+	if(tmp=="yes") { f.s_hemisphere.checked = true; }
+
+	// lat/long
+	f.fc_Lt_d.value = getPS('Lt_d');
+	f.fc_Lt_m.value = getPS('Lt_m');
+	f.fc_Lt_s.value = getPS('Lt_s');
+	setSelectedValue( f.fc_Lt_dir, getPS('Lt_dir') );
+	f.fc_Lg_d.value = getPS('Lg_d');
+	f.fc_Lg_m.value = getPS('Lg_m');
+	f.fc_Lg_s.value = getPS('Lg_s');
+	setSelectedValue( f.fc_Lg_dir, getPS('Lg_dir') );
+
+}
+
+function makeFindScreen()
+{
+	assignNewView('find_screen');
+	var f = cObj.document.forms.findform;
+//	if(f.start.value=='') {
+////		cObj.setFindStart('target');
+//	}
+}
+function generateFindScreenOutput() {
+
+	var obj = cObj.document.getElementById('find_results');
+
+//	var f = cObj.document.forms['findform'];
+//	var phase = getSelectedValue(f.phase);
+//	var month = getSelectedValue(f.month);
+//	var day = getSelectedValue(f.day);
+//	var max = f.max.value;
+//	var start = f.start.value;
+//	if(month && !day) {
+//		alert( "If you select a month, you must also select a day." );
+//		f.day.focus();
+//		return false;
+//	}
+//	if(day && !month) {
+//		alert( "If you select a day, you must also select a month." );
+//		f.month.focus();
+//		return false;
+//	}
+//	if(!start) {
+//		alert( "You must enter a \"Starting From\" date." );
+//		f.start.focus();
+//		return false;
+//	}
+//	if(!max || max<=0) {
+//		alert( "You must enter \"Number of Results\" (greater than zero)." );
+//		f.max.focus();
+//		return false;
+//	}
+//
+//	var a = strDt2(start,getSS('dt_format'),getSS('jd'));
+//	if(!a) {
+//		f.start.focus();
+//		return false;
+//	}
+//	start = date_to_JD(a['Y'],a['M'],a['D']);
+//	var str = listQuarters(phase, month-0+1, day-0, start, max );
+//
+//	obj.innerHTML = str;
+}
+function redrawFindScreen(prev_dt_format)
+{
+	var f = cObj.document.forms['findform'];
+	var start = f.start.value;
+	var a = false;
+	if(start) {
+		a = strDt2(start,prev_dt_format,getSS('jd'),'noAlert');
+		if(a) {
+			var start = date_to_JD(a['Y'],a['M'],a['D']);
+			start = dateFieldFormat(start);
+			f.start.value = start;
+		}
+	}
+
+	var obj = cObj.document.getElementById('cal1_screen');
+	if(obj.innerHTML) {
+		if(!a) {
+			obj.innerHTML = '';
+			return;
+		}
+		generateFindScreenOutput();
+	}
+}
+
+function makeHelpScreen()
+{
+	assignNewView('help_screen');
+
+}
+
+function mainNavOn(obj)
+{
+	obj.style.backgroundColor="#1C273A";
+}
+function mainNavOff(obj)
+{
+	obj.style.backgroundColor="#000000";
+}
+function subNavOn(obj)
+{
+	obj.style.backgroundColor="#333333";
+}
+function subNavOff(obj)
+{
+	obj.style.backgroundColor="#000000";
+}
+
+function printContentArea()
+{
+	// Also: cObj.focus() is the key! If used,
+	// window.external.ActivRun('##PRINT()')
+	// can be put here, but it seems safer to put
+	// it on the iframe content page.
+	// Do not use cObj.print() as it bypasses the
+	// ebook page header/footer control.
+
+	cObj.focus();
+	cObj.printContent();
+}
+
+var printFlag = false;
+function setPrintFlag()
+{
+	printFlag = true;
+	cObj.location.reload()
+}
+function contentReloaded()
+{
+	return true;
+
+	if(printFlag) {
+		recoverScreen();
+		cObj.focus();
+		cObj.print();
+		printFlag = false;
+	} else {
+		recoverScreen();
+	}
+}
+function recoverScreen()
+{
+	if(getSS('cV')) {
+		makeScreen(getSS('cV'));
+	}
+}
+
+function collapseToggle()
+{
+	var obj = document.getElementById('bottomTDL');
+	var state = obj.style.display;
+	if(state=='block') {
+		bottomMenuDisplay(0)
+		setPS('bM',0);
+	} else {
+		bottomMenuDisplay(1)
+		setPS('bM',1);
+	}
+	storePS();
+}
+function bottomMenuDisplay(display)
+{
+	var obj = document.getElementById('bottomTDL');
+	display = display*1;
+	if(display==1) {
+		obj.style.display = 'block';
+		document.images.toggleImg1.src = 'btn_toggle1.gif';
+		bottomMenuOn = true;
+	} else {
+		obj.style.display = 'none';
+		document.images.toggleImg1.src = 'btn_toggle2.gif';
+		bottomMenuOn = false;
+	}
+	resizeMain(1);
+}
+
+var bottomMenuOn = false;
+var calendarMenuOn = false;
+var activationNoticeOn = true;
+function resizeMain(x)
+{
+	var obj = document.getElementById('iframe_content');
+	var docHeight = top.getHeight();//document.body.offsetHeight;
+	var bm = bottomMenuOn?80:35;
+	var cm = calendarMenuOn?115:85;
+	var an = activationNoticeOn?30:0;
+	var finalHeight = docHeight - bm - cm - an;
+	//alert("docHeight:"+docHeight+" final:"+finalHeight);
+
+	if( (getSS('cV')=='main_screen' || x==1) && x!=0) {
+	/*
+		var topoffset=0;
+		topoffset = ((finalHeight-250)/8)*3;
+		var obj2 = cObj.document.getElementById('main_screen');
+		obj2.style.paddingTop=topoffset+'px';
+		*/
+	}
+	obj.style.height = finalHeight;
+
+	// REM: property offsetWidth
+}
+
+
+var currColor = '#ffffff';
+var currColor2 = '#999999';
+function toggleColor()
+{
+	currColor=='#ffffff' ? currColor='#000000' : currColor='#ffffff';
+	document.body.style.backgroundColor=currColor;
+	frames.iframe_content.document.body.style.backgroundColor=currColor;
+	var obj = document.getElementById('targetInfo');
+	currColor2=='#222222' ? currColor2='#999999' : currColor2='#222222';
+	obj.style.backgroundColor=currColor2;
+}
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*								 MAIN SCREEN 									*/
+/*																				*/
+/********************************************************************************/
+
+
+function getMainScreen()
+{
+	//
+	// vars
+	//
+	var str = "", rise_azimuth="", set_azimuth="";
+	//var msdate = getSS('msdate');
+	//alert(quickDtStr(msdate));
+	var jd = getSS('jd');
+	//alert(quickDtStr2(jd));
+	var jdate = JD_to_date(jd);
+ top.sendMessage(jd);
+
+	//var dt = new Date(msdate);
+	var tz = getSS('tz');
+	var TZ_dst = DST_adj2( getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst') );
+	//alert("TZ_dst:"+TZ_dst+" tz:"+tz);
+	var dt_format = getSS('dt_format');
+	var clock = getSS('clock');
+	var Lg = dms_to_d(getSS('Lg_d'),getSS('Lg_m'),getSS('Lg_s'),getSS('Lg_dir'));
+	var Lt = dms_to_d(getSS('Lt_d'),getSS('Lt_m'),getSS('Lt_s'),getSS('Lt_dir'));
+
+	//
+	// ephemeris
+	//
+	//var e = Ephemeris(msdate,tz);
+	var e = Ephemeris(jd,TZ_dst); // REM: test showed dst makes only 10 to 30' (secs) difference
+	//alert("RA:"+e.MoonRa+" RA2:"+e2.MoonRa+"Dec:"+e.MoonDec+" Dec2:"+e2.MoonDec);
+	var moon = new Object();
+	//var tz_adj_msdate = msdate+((tz-getSS('sys_tz'))*MSPH);
+
+	//var tmp_msdate = Date.UTC( dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds() );
+	//var tmp_msdate_adj = tmp_msdate - (TZ_dst*MSPH); // TZ_dst = only about 0.2% moon age diff
+
+	var moon = getPhase(jd,TZ_dst);
+
+	//var tmp_msdate_adj2 = tmp_msdate - (tz*MSPH);
+	//var moon2 = getPhase(tmp_msdate_adj2);
+	//alert("moon.age:"+moon.age+" moon2.age:"+moon2.age);
+
+	//
+	// rise/set, azimuth/altitude
+	//
+	var rs = { rise:LocMsgAlert, set:LocMsgAlert };
+	var H = new Object();
+	var azimuth=LocMsgAlert, altitude=LocMsgAlert, az_dec="", alt_dec="";
+	if(
+		LtCheck( getSS('Lt_d'),getSS('Lt_m'),getSS('Lt_s') )
+		&&
+		LgCheck( getSS('Lg_d'),getSS('Lg_m'),getSS('Lg_s') )
+		&&
+		is_number(getPS('tz'))
+	) {
+		rs = getRiseSet(jd,TZ_dst,Lg,Lt,getSS('clock')); // rem: dt is used to get mjd (just passes in generic y m d h)
+		// rise pos
+		if(rs.rise_dec) {
+			var tmpDt = x_to_xms(rs.rise_dec);
+			//tmpDt = new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),tmpDt['x'],tmpDt['m'],tmpDt['s']);
+			var tmpJD = date_to_JD( jdate['Y'], jdate['M'], jdate['D'], tmpDt['x'],tmpDt['m'],tmpDt['s'] );
+			var tmp_e = Ephemeris(tmpJD,TZ_dst);
+			var rise_H = Horizon(tmp_e.MoonRa,tmp_e.MoonDec,tmpJD,TZ_dst,Lg,Lt);
+			rise_azimuth = " at "+rnd(rise_H.az,0)+"&deg";
+		}
+		// set pos
+		if(rs.set_dec) {
+			var tmpDt = x_to_xms(rs.set_dec);
+			//tmpDt = new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),tmpDt['x'],tmpDt['m'],tmpDt['s']);
+			var tmpJD = date_to_JD( jdate['Y'], jdate['M'], jdate['D'], tmpDt['x'],tmpDt['m'],tmpDt['s'] );
+			var tmp_e = Ephemeris(tmpJD,TZ_dst);
+			var set_H = Horizon(tmp_e.MoonRa,tmp_e.MoonDec,tmpJD,TZ_dst,Lg,Lt);
+			set_azimuth = " at "+rnd(set_H.az,0)+"&deg;";
+		}
+		// current pos
+		H = Horizon(e.MoonRa,e.MoonDec,jd,TZ_dst,Lg,Lt);
+		azimuth = dStr(H.az);
+		az_dec = rnd(H.az,4);
+		altitude = dStr(H.alt);
+		alt_dec = rnd(H.alt,4);
+	}
+	//
+	// Quarter phases
+	//
+	var qArray = Quarters(jd);
+
+
+	var q_str = "";
+	//for(var i = 0; i<qArray.length; i++) {
+	//	q_str += dtStr(qArray[i].dt,dt_format)+' '+tStr(qArray[i].dt,clock,1)+' ['+qArray[i].q+']<br>';
+	//}
+	//alert(q_str);
+
+	var x, y, jdate;
+	x = fetchQuarter(qArray,0,jd);
+	y = JD_dateDiff(jd,x.jd);
+	//jdate = JD_to_date(x.jd);
+	var NextNewDtStr = dtStr2(x.jd,dt_format)+' '+tStr2(x.jd,clock);
+	var NextNewCtStr = rnd(y.x,1)+' '+y.units;
+
+	x = fetchQuarter(qArray,1,jd);
+	y = JD_dateDiff(jd,x.jd);
+	//jdate = JD_to_date(x.jd);
+	var NextFQDtStr = dtStr2(x.jd,dt_format)+' '+tStr2(x.jd,clock);
+	var NextFQCtStr = rnd(y.x,1)+' '+y.units;
+
+	x = fetchQuarter(qArray,2,jd);
+	y = JD_dateDiff(jd,x.jd);
+	//jdate = JD_to_date(x.jd);
+	var NextFullDtStr = dtStr2(x.jd,dt_format)+' '+tStr2(x.jd,clock);
+	var NextFullCtStr = rnd(y.x,1)+' '+y.units;
+
+	x = fetchQuarter(qArray,3,jd);
+	y = JD_dateDiff(jd,x.jd);
+	//jdate = JD_to_date(x.jd);
+	var NextLQDtStr = dtStr2(x.jd,dt_format)+' '+tStr2(x.jd,clock);
+	var NextLQCtStr = rnd(y.x,1)+' '+y.units;
+
+	//
+	// age
+	//
+/*
+function alertArray(a)
+{
+	var str = "";
+	for(var i=0; i<a.length; i++) {
+		str += i+": "+a[i].q+" "+quickDtStr2(a[i].jd)+"\n";
+	}
+	alert(str);
+}
+alertArray(qArray);
+*/
+	var prevNM = fetchPrevNM(qArray,jd);
+	var age = getAge(prevNM.jd,jd);
+	//
+	// image
+	//
+	var img = mImg(moon.D);
+	var s_h = (getSS('s_hemisphere')=="yes")?"_s":"";
+	//REM: style="filter:progid:DXImageTransform.Microsoft.BasicImage(grayscale=0, xray=0, mirror=0, invert=0, opacity=1, rotation=2)"
+	//
+	// make string
+	//
+ 
+	str += '<table cellpadding="5" cellspacing="0" border="0">';
+	str += '<tr>';
+	// image
+	str += '<td style="padding-right:35px">';
+	str += '<canvas id="viewportcanvas" width="236" height="236" >m'+img+s_h+'.jpg</canvas></td>';
+//	str += '<td style="padding-right:35px">';
+//	str += '</td>';
+	//str += '<td valign="top"><img src="spacer.gif" width="250" height="250" border="0" style="border:1px solid #cdcdcd"></td>';
+
+	// data cell
+	str += '<td width="290" bgcolor="#000000" s!tyle="padding-top:15px">';
+		// nav
+		str += '<table width="260" bgcolor="#000000" style="border-top:1px solid #222222;border-bottom:1px solid #222222"cellpadding="0" cellspacing="0" border="0">';
+		str += '<tr><td align="center">';
+		str += '<table width="98%" cellpadding="0" cellspacing="0" border="0">';
+		str += '<tr>';
+		str += '<td><a href="#" onclick="parent.BackNext(\'d\',\'back\');return false;">';
+		str += '<img src="btn_prev2.gif" width="11" height="11" border="0" /></a>';
+		str += '<img src="spacer.gif" width="15" height="1" border="0" />';
+		str += '<a href="#" onclick="parent.BackNext(\'h\',\'back\');return false;">';
+		str += '<img src="btn_prev1.gif" width="8" height="11" border="0" /></a>';
+		str += '</td><td align="right">';
+		str += '<a href="#" onclick="parent.BackNext(\'h\',\'next\');return false;">';
+		str += '<img src="btn_next1.gif" width="8" height="11" border="0" /></a>';
+		str += '<img src="spacer.gif" width="15" height="1" border="0" />';
+		str += '<a href="#" onclick="parent.BackNext(\'d\',\'next\');return false;">';
+		str += '<img src="btn_next2.gif" width="11" height="11" border="0" /></a>';
+		str += '</td>';
+		str += '</tr>';
+		str += '</table>';
+		str += '</td></tr></table>';
+	str += '<table width="100%" style="margin-top:7px" width="100%" cellpadding="2" cellspacing="0" border="0">';
+	/*
+	str += '<tr>';
+	str += '<td><a href="#" onclick="parent.BackNext(\'d\',\'back\');return false;">&laquo;&laquo;</a>';
+	str += '&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" onclick="parent.BackNext(\'h\',\'back\');return false;">&laquo;</a>';
+	str += '</td><td align="right">';
+	str += '<a href="#" onclick="parent.BackNext(\'h\',\'next\');return false;">&raquo;</a>';
+	str += '&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" onclick="parent.BackNext(\'d\',\'next\');return false;">&raquo;&raquo;</a>';
+	str += '</td>';
+	str += '</tr>';
+	*/
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Target:</td>';
+	str += '<td width="100%" class="dayInfoData" nowrap="1">'+dtStr2(jd,dt_format)+' '+tStr2(jd,clock,1)+'</td>';
+	str += '</tr>';
+
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Phase Name:</td>';
+	str += '<td class="dayInfoData" nowrap="1">'+aPN[phN(moon.D)]+'</td>';
+	str += '</tr>';
+/*
+	str += '<tr>';
+	str += '<td>Illum:</td><td>'+rnd(e.SelIlum*100,0)+'%'+' PhaseAngle: '+e.PhaseAngle+'</td>';
+	str += '</tr>';
+*/
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" style="padding-right:25px" nowrap="1">Percent of Full:</td>';
+	str += '<td class="dayInfoData" nowrap="1">'+rnd(moon.phase,0)+'%';
+	//str += '% AGE (D): ' + rnd(moon.D,0);
+	str += '</td>';
+	str += '</tr>';
+
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Age:</td>';
+	str += '<td class="dayInfoData" nowrap="1">' + rnd(moon.age,0) + '% (' + age.d + ' days '+age.h+' hrs '+pad2(age.m)+' mins)';
+	str += '</td>';
+	str += '</tr>';
+/*
+	str += '<tr>';
+	str += '<td>Age:</td><td>' + age.d + ' days '+age.h+':'+pad2(age.m)+':' + pad2(age.s) +' ' + dtStr(prevNM.dt,dt_format)+' '+tStr(prevNM.dt,clock,1)+' ['+prevNM.q+']['+prevNM.k1+']['+prevNM.k2+']</td>';
+	str += '</tr>';
+*/
+	//str += '<tr>';
+	//str += '<td>Distance:</td><td>'+e.MoonDist+'</td>';
+	//str += '</tr>';
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Azimuth:&nbsp;&nbsp;</td>';
+	str += '<td class="dayInfoData" nowrap="1">'+azimuth+' <!--('+az_dec+'&deg;)--></td>';
+	str += '</tr><tr>';
+
+	str += '<td class="dayInfoLabel" nowrap="1">Altitude:&nbsp;&nbsp;</td>';
+	str += '<td class="dayInfoData" nowrap="1">'+altitude+' <!--('+alt_dec+'&deg;)--></td>';
+	str += '</tr><tr>';
+
+	//str+= '<td class="dayInfoData" nowrap="1">365&deg; 59\' 59" / 365&deg; 59\' 59"</td>';
+	str += '</tr>';
+	//str += '<tr>';
+	//str += '<td>RA/Dec:</td><td>'+rnd(e.MoonRa,2)+' hrs/ '+rnd(e.MoonDec,2)+' deg</td>';
+	//str += '</tr>';
+
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Rise:</td>';
+	str += '<td class="dayInfoData">'+rs.rise+rise_azimuth+'</td>';
+	str += '</tr>';
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Set:</td>';
+	str += '<td class="dayInfoData" nowrap="1">'+rs.set+set_azimuth+'</td>';
+	str += '</tr>';
+	//str += '<tr>';
+	//str += '<td>UToutstring:</td><td>'+rs.outstring+'</td>';
+	//str += '</tr>';
+
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Next New:</td>';
+	str += '<td class="dayInfoData" nowrap="1">' + NextNewDtStr + ' &nbsp;['+NextNewCtStr+']';
+	str += '</td>';
+	str += '</tr>';
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Next FQ:</td>';
+	str += '<td class="dayInfoData" nowrap="1">' + NextFQDtStr + ' &nbsp;['+NextFQCtStr+']';
+	str += '</td>';
+	str += '</td>';
+	str += '</tr>';
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Next Full:</td>';
+	str += '<td class="dayInfoData" nowrap="1">' + NextFullDtStr + ' &nbsp;['+NextFullCtStr+']';
+	str += '</td>';
+	str += '</td>';
+	str += '</tr>';
+	str += '<tr>';
+	str += '<td class="dayInfoLabel" nowrap="1">Next LQ:</td>';
+	str += '<td class="dayInfoData" nowrap="1">' + NextLQDtStr + ' &nbsp;['+NextLQCtStr+']';
+	str += '</td>';
+	str += '</td>';
+	str += '</tr>';
+
+	str += '<tr>';
+	str += '<td colspan="2" style="padding-top:7px">';
+	str += '<span class="pseudoInputBtn2" onclick="parent.makeScreen(\'cal1_screen\');" style="width:130">Month View</span>';
+	str += ' <span class="pseudoInputBtn2" onclick="parent.setNow();" style="width:120">Now</span>';
+	str += '</td>';
+	str += '</tr>';
+
+	str += '</table>';
+//str += '</td><tr>';
+
+//str += '<tr><td colspan="2" align="center">';
+	// alt nav loc here
+str += '</td></tr>';
+str += '</table>';
+//str += '<img id="viewportimage" style="visibility:hidden;" src="m'+img+s_h+'.jpg" width="236" height="236" border="0">';
+moonImage = 'm'+img+s_h+'.jpg';
+	return str;
+}
+
+
+/*+******************************************************************************/
+/*																				*/
+/*							MAIN CALENDAR SCREEN 								*/
+/*																				*/
+/********************************************************************************/
+
+
+var cal1Storage = new Object();
+cal1Storage.calDayInfo = new Array();
+cal1Storage.calQtrInfo = new Array();
+cal1Storage.calQuarters;
+cal1Storage.width = 630;
+cal1Storage.cellHeight = 54;
+cal1Storage.borderColor = "#838383";
+cal1Storage.bgColor = "#000000";
+
+function getCal1Screen()
+{
+	// set date
+	var jd = getSS('jd');
+	if(getSS('cal_time')!=-1) {
+		jd = update_JD(jd,'','',1,getSS('cal_time'),0,0);
+	} else {
+		jd = update_JD(jd,'','',1);
+	}
+	var jdate = JD_to_date(jd);
+
+	// data inputs
+	var Lg = dms_to_d(getSS('Lg_d'),getSS('Lg_m'),getSS('Lg_s'),getSS('Lg_dir'));
+	var Lt = dms_to_d(getSS('Lt_d'),getSS('Lt_m'),getSS('Lt_s'),getSS('Lt_dir'));
+	var loc_ok = false; 
+	if(
+		LtCheck( getSS('Lt_d'),getSS('Lt_m'),getSS('Lt_s') )
+		&&
+		LgCheck( getSS('Lg_d'),getSS('Lg_m'),getSS('Lg_s') )
+	) {
+		loc_ok = true;
+	}
+
+	var TZ_dst = DST_adj2( getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst') );
+
+	// set quarter phases
+	cal1Storage.calQuarters = Quarters(jd);
+
+	// table vars
+	var td = '<td height="'+cal1Storage.cellHeight+'" bgcolor="'+cal1Storage.bgColor+'">';
+	var td_blank = '<td height="'+cal1Storage.cellHeight+'" bgcolor="'+cal1Storage.bgColor+'"><img src="spacer.gif" width="1" height="'+cal1Storage.cellHeight+'" border="0" /></td>';
+	var str = "", wkdy, dy, dy_str="";
+
+	// outer
+	str =  '<table width="510" cl!ass="cal1width" border="0" cellspacing="0" cellpadding="0" bgcolor="'+cal1Storage.borderColor+'" wi!dth="'+cal1Storage.width+'"><tr><td>';
+		// inner
+		str += '<table width="100%" border="0" cellspacing="1" cellpadding="2"><tr>';
+		str += '<td colspan="7" height="20" bgcolor="'+cal1Storage.bgColor+'">';
+			// header
+			str += '<table width="100%" cellspacing="0" cellpadding="0" border="0">';
+			str += '<tr><td>&nbsp;&nbsp;<a href="#" onclick="parent.BackNext(\'m\',\'back\');return false;">';
+			str += '<img src="btn_prev1.gif" width="8" height="11" border="0" /></a></td>';
+			str += '<td align="center" width="100%"><b>'+aM[jdate['M']-1]+'&nbsp;'+jdate['Y']+'</b></td>';
+			str += '<td align="right"><a href="#" onclick="parent.BackNext(\'m\',\'next\');return false;">';
+			str += '<img src="btn_next1.gif" width="8" height="11" border="0" />';
+			str += '</a>&nbsp;&nbsp;</td>';
+			str += '</tr></table>';
+		str += '</td></tr>';
+		str += '<tr>';
+
+	// weekday col header
+	for(var i=0; i < 7; i++) {
+		str += '<td bgcolor="'+cal1Storage.bgColor+'" align="center" style="font-size:10px">' + aDW[i] + '</td>';
+	}
+
+	str += '</tr><tr>';
+
+	// initial blanks
+	wkdy = jdate['wd'];
+	for(var i=0; i < wkdy; i++) { str += td_blank; }
+
+	var jcal = (jdate['Y']==1582 && jdate['M']==10);
+
+	// main loop
+	do {
+
+		wkdy = jdate['wd'];
+		dy = jdate['D'];
+
+		// new row
+		if( (wkdy == 0) && (dy!=1) ) { str += '<tr>'; }
+		// for Oct 1582
+		if(jcal && dy==15) {
+			str += td_blank;
+			str += td_blank;
+			str += '</tr><tr>';
+			for(var i=1; i <= 7; i++) { str += td_blank; }
+			str += '</tr><tr>';
+			for(var i=1; i <= 5; i++) { str += td_blank; }
+		}
+
+		// td
+		dy_str = getDayStr(jd,jdate,Lt,Lg,loc_ok);
+		str += td + dy_str + '</td>';
+		dy_str="";
+
+		// end row
+		if(wkdy==6) {
+			str += '</tr>';
+		}
+
+		// set next day
+		jd = jd + 1;
+		jdate = JD_to_date(jd);
+
+	} while ( dy < jdate['D'] );
+
+
+	// final blanks
+	if(wkdy<6){
+		for(i=1;i<7-wkdy;i++) { str += td_blank; }
+		str += '</tr>';
+	}
+
+	// end inner
+	str += '</td></tr></table>';
+	// end outer
+	str += '</td></tr></table>';
+
+	//alert(str);
+	return str;
+}
+
+function getDayStr(jd,jdate,Lt,Lg,loc_ok)
+{
+	var str="", img="x", isQ=false, flagQ="";
+	var moon = new Object();
+
+	var dy = jdate['D'];
+
+	var TZ_dst = DST_adj2( getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst') );
+
+	var s_h = (getSS('s_hemisphere')=="yes")?"_s":"";
+
+	var rs = { rise:LocMsgAlert, set:LocMsgAlert };
+	if( loc_ok ) {
+		rs = getRiseSet(jd,TZ_dst,Lg,Lt,getSS('clock'));
+	}
+
+	// temp testing:
+	var altitude="", azimuth="";
+	//var e = Ephemeris(jd,TZ_dst);
+	//var H = Horizon(e.MoonRa,e.MoonDec,jd,TZ_dst,Lg,Lt);
+	//var azimuth = dStr(H.az);
+	//var altitude = dStr(H.alt);
+
+	moon = getPhase(jd,TZ_dst);
+	img = mImg(moon.D);
+	//alertS(jdate['h'],5);
+	cal1Storage.calDayInfo['day_info_'+jdate['D']] = makeCalDayInfo(jdate,moon,rs,azimuth,altitude);
+	img_onclick = 'parent.showCalDayInfo('+jdate['D']+');return false;';
+	dy_onclick = 'parent.setTarget(\''+jd+'\',1);parent.makeScreen(\'main_screen\');return false;';
+
+	for(var i=0; i<cal1Storage.calQuarters.length; i++) {
+		if( dtStr2(cal1Storage.calQuarters[i].jd,'dd/mm/yyyy') == dtStr2(jd,'dd/mm/yyyy') ) {
+			//isQ = cal1Storage.calQuarters[i];
+			var Q_jd = cal1Storage.calQuarters[i].jd;
+			var Q_jdate = JD_to_date(cal1Storage.calQuarters[i].jd);
+			moon = getPhase(Q_jd,TZ_dst);
+			cal1Storage.calQtrInfo['day_info_'+Q_jdate['D']] = makeCalQtrInfo(Q_jdate,moon,rs);
+			img = mImg_qn(cal1Storage.calQuarters[i].qn);
+			//flagQ += '<a href="#" onclick="parent.showCalQtrInfo(\''+Q_dt.getDate()+'\',1);return false;" class="calQtr" style="color:#BBD7FD">';
+			flagQ += '<br /><b class="calQtr">'+cal1Storage.calQuarters[i].q+'</b>';
+			//flagQ += '</a>';
+			dy = '<b style="color:#FBFF9B">'+dy+'</b>';
+			img_onclick = 'parent.showCalQtrInfo('+Q_jdate['D']+');return false;';
+			dy_onclick = 'parent.setTarget(\''+Q_jd+'\',1);parent.makeScreen(\'main_screen\');return false;';
+			break;
+		}
+	}
+
+	str += '<table height="' +cal1Storage.cellHeight+ '" width="100%" cellpadding="0" cellspacing="0" border="0">';
+	str += '<tr><td valign="top" style="padding-left:2px;padding-right:2px">';
+	str += '<a href="#" onclick="'+dy_onclick+'" class="calDate">';
+	str += dy;
+	str += '</a>';
+	str += flagQ;
+	str += '</td>';
+	str += '<td align="right">';
+	str += '<a href="#" onclick="'+img_onclick+'" class="calDate">';
+	str += '<img src="1_m'+img+s_h+'.jpg" width="0" height="0" border="0">';
+	str += '<canvas width="50" height="50">1_m'+img+s_h+'.jpg</canvas>';
+	str += '</a>';
+	str += '</td>';
+	str += '</tr></table>';
+
+	return str;
+}
+function showCalDayInfo(d)
+{
+	var obj = document.getElementById('calDayInfo');
+	obj.innerHTML = cal1Storage.calDayInfo['day_info_'+d];
+}
+function showCalQtrInfo(d)
+{
+	var obj = document.getElementById('calDayInfo');
+	obj.innerHTML = cal1Storage.calQtrInfo['day_info_'+d];
+}
+function hideCalDayInfo(str)
+{
+	var obj = document.getElementById('calDayInfo');
+	obj.innerHTML = "";
+}
+function makeCalDayInfo(jdate,moon,rs,az,alt)
+{
+	var obj = document.getElementById('calDayInfoTemplate');
+	var str ="";
+	str = obj.innerHTML;
+	str = str.replace(/\|name\|/,aPN[phN(moon.D)]);
+	str = str.replace(/\|date\|/,aMs[jdate['M']-1]+" "+jdate['D']+", "+jdate['Y']+" "+tStr2(jdate,getSS('clock')));
+	str = str.replace(/\|rise\|/,rs.rise);
+	str = str.replace(/\|set\|/,rs.set);
+	str = str.replace(/\|illum\|/,rnd(moon.phase,0)+'%');
+	str = str.replace(/\|age\|/,rnd(moon.age,0));
+	//str = str.replace(/\|az\|/,az);
+	//str = str.replace(/\|alt\|/,alt);
+	return str;
+}
+function makeCalQtrInfo(jdate,moon,rs)
+{
+	var obj = document.getElementById('calQtrInfoTemplate');
+	var str ="";
+	str = obj.innerHTML;
+	str = str.replace(/\|name\|/,aPN[phN(moon.D)]);
+	str = str.replace(/\|date\|/,aMs[jdate['M']-1]+" "+jdate['D']+", "+jdate['Y']+" "+tStr2(jdate,getSS('clock')));
+	str = str.replace(/\|rise\|/,rs.rise);
+	str = str.replace(/\|set\|/,rs.set);
+	str = str.replace(/\|illum\|/,rnd(moon.phase,0)+'%');
+	str = str.replace(/\|age\|/,rnd(moon.age,0));
+	return str;
+}
+
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*							PRINTABLE CALENDAR 1 								*/
+/*																				*/
+/********************************************************************************/
+
+var cal2Storage = new Object();
+cal2Storage.calQuarters;
+cal2Storage.cal_img_path = "";
+
+function getCal2Screen()
+{
+	var str="", wkdy, dy, dy_str="";
+
+	// set date
+	var jd = getSS('jd');
+	if(getSS('cal_time')!=-1) {
+		jd = update_JD(jd,'','',1,getSS('cal_time'),0,0);
+	} else {
+		jd = update_JD(jd,'','',1);
+	}
+	var jdate = JD_to_date(jd);
+
+	var TZ_dst = DST_adj2( getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst') );
+
+	// set quarter phases
+	cal2Storage.calQuarters = Quarters(jd);
+
+	// table vars
+	var year = jdate['Y'];
+	year = year+"";
+	var digit_y1=year.substring(0,1), digit_y2=year.substring(1,2), digit_y3=year.substring(2,3), digit_y4=year.substring(3,4);
+
+	var hSpacing = prnCal2HeaderSpacing(jdate['M']-1);
+	var td_start = '<td width="75">';
+	var td_blank = '<td width="75"><img src="'+cal2Storage.cal_img_path+'2_d0.gif" width="76" height="81" border="0" /></td>';
+	var border_1 = '<img src="'+cal2Storage.cal_img_path+'2_border_1.gif" width="2" height="81" border="0" />';
+	var border_2 = '<img src="'+cal2Storage.cal_img_path+'2_border_2.gif" width="1" height="80" border="0" />';
+
+	str = '<table width="537" cellspacing="0" cellpadding="0" border="0">';
+	str += '<tr><td align="center" colspan="9"><img src="'+cal2Storage.cal_img_path+'2_bottom_1.gif" width="537" height="2" border="0" /></td></tr>';
+
+	// header row
+	str += '<tr>';
+	str += '<td><img src="'+cal2Storage.cal_img_path+'2_border_1.gif" width="2" height="37" border="0" />';
+	str += '<img src="'+cal2Storage.cal_img_path+'2_border_2.gif" width="1" height="36" border="0" /></td>';
+	str += '<td colspan="7"><img src="'+cal2Storage.cal_img_path+'2_bottom_2.gif" width="531" height="1" border="0" /><br />';
+		// header (inner)
+		str += '<table cellspacing="0" cellpadding="0" border="0"><tr><td>';
+		str += '<a href="mcp.html" onclick="parent.BackNext(\'m\',\'back\');return false;">';
+		str += '<img src="'+cal2Storage.cal_img_path+'2_bl.gif" width="'+hSpacing.sp1+'" height="36" border="0" /></a></td><td>';
+		str += '<img src="'+cal2Storage.cal_img_path+'2_mth_'+(jdate['M']-1)+'.gif" width="'+hSpacing.mwidth+'" height="36" border="0">';
+  str += '<img src="'+cal2Storage.cal_img_path+'2_bl.gif" width="12" height="36" border="0" />';
+		str += '<img src="'+cal2Storage.cal_img_path+'2_yr_'+digit_y1+'.gif" width="19" height="36" border="0">';
+		str += '<img src="'+cal2Storage.cal_img_path+'2_yr_'+digit_y2+'.gif" width="19" height="36" border="0">';
+		str += '<img src="'+cal2Storage.cal_img_path+'2_yr_'+digit_y3+'.gif" width="19" height="36" border="0">';
+		str += '<img src="'+cal2Storage.cal_img_path+'2_yr_'+digit_y4+'.gif" width="19" height="36" border="0">';
+		str += '</td><td align="right">';
+		str += '<a href="mcp.html" onclick="parent.BackNext(\'m\',\'next\');return false;">';
+		str += '<img src="'+cal2Storage.cal_img_path+'2_bl.gif" width="'+hSpacing.sp2+'" height="36" border="0" /></a>';
+		str += '</td></tr></table>';
+	str += '</td>';
+	str += '<td><img src="'+cal2Storage.cal_img_path+'2_border_1.gif" width="2" height="37" border="0" /></td>';
+	str += '</tr>';
+
+	// weekday row
+	str += '<tr>';
+	str += '<td><img src="'+cal2Storage.cal_img_path+'2_border_1.gif" width="2" height="20" border="0"></td>';
+		for(var i=0; i < 7; i++) {
+		str += '<td>';
+		str += '<table width="76" cellspacing="0" cellpadding="0" border="0"><tr><td>'
+		str += '<img src="'+cal2Storage.cal_img_path+'2_border_2.gif" width="76" height="1" border="0"><br /><img src="'+cal2Storage.cal_img_path+'2_wd_'+i+'.gif" width="75" height="19" border="0" /><img src="'+cal2Storage.cal_img_path+'2_border_2.gif" width="1" height="19" border="0">';
+		str += '</td></tr></table></td>';
+	}
+	str += '<td><img src="'+cal2Storage.cal_img_path+'2_border_1.gif" width="2" height="20" border="0"></td>';
+	str += '</tr>';
+
+	// initial blanks
+	wkdy = jdate['wd'];
+	str += '<td>'+border_1+border_2+'</td>';
+	for(var i=0; i < wkdy; i++) {
+		str += td_blank;
+	}
+
+	var jcal = (jdate['Y']==1582 && jdate['M']==10);
+
+	// main loop
+	do {
+
+		wkdy = jdate['wd'];
+		dy = jdate['D'];
+
+		// new row
+		if( (wkdy == 0) && (dy!=1) ) { str += '<tr><td>'+border_1+border_2+'</td>'; }
+		// for Oct 1582
+		if(jcal && dy==15) {
+			str += td_blank;
+			str += td_blank;
+			str += '<td>'+border_1+'</td></tr>';
+			str += '<tr><td>'+border_1+border_2+'</td>';
+			for(var i=1; i <= 7; i++) { str += td_blank; }
+			str += '<td>'+border_1+'</td></tr>';
+			str += '<tr><td>'+border_1+border_2+'</td>';
+			for(var i=1; i <= 5; i++) { str += td_blank; }
+		}
+
+		// td
+		dy_str = getDayStr2(jd,jdate);
+		str += td_start + dy_str + '</td>';
+		dy_str="";
+
+		// end row
+		if(wkdy == 6) {
+			str += '<td>'+border_1+'</td></tr>';
+		}
+
+		// set next day
+		jd = jd + 1;
+		jdate = JD_to_date(jd);
+
+	} while ( dy < jdate['D'] );
+
+
+	// final blanks
+	if(wkdy<6){
+		for(i=1; i < 7-wkdy; i++)
+			str += td_blank;
+		str += '<td>'+border_1+'</td></tr>';
+	}
+
+	// final rows
+	str += '<tr>';
+	str += '<td><img src="'+cal2Storage.cal_img_path+'2_border_1.gif" width="2" height="1" border="0" /></td>';
+	str += '<td colspan="7"><img src="'+cal2Storage.cal_img_path+'2_bottom_2.gif" width="1" height="1" border="0" /></td>';
+	str += '<td><img src="'+cal2Storage.cal_img_path+'2_border_1.gif" width="2" height="1" border="0" /></td>';
+	str += '</tr>';
+	str += '<tr><td align="center" colspan="9"><img src="'+cal2Storage.cal_img_path+'2_bottom_1.gif" width="537" height="2" border="0" />';
+	str += '<br /><img src="'+cal2Storage.cal_img_path+'copyright.gif" width="176" height="17" border="0" /></td></tr>';
+	str += '</table>';
+
+	return str;
+}
+function getDayStr2(jd,jdate)
+{
+	var str="", img="x", isQ=false, flagQn="";
+
+	var TZ_dst = DST_adj2( getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst') );
+
+	var s_h = (getSS('s_hemisphere')=="yes")?"_s":"";
+
+	for(var i=0; i<cal2Storage.calQuarters.length; i++) {
+		if( dtStr2(cal2Storage.calQuarters[i].jd,'dd/mm/yyyy') == dtStr2(jd,'dd/mm/yyyy') ) {
+			jd = cal2Storage.calQuarters[i].jd;
+			isQ = true;
+			break;
+		}
+	}
+	if(isQ) {
+		flagQn = cal2Storage.calQuarters[i].qn;
+		img = mImg_qn(cal2Storage.calQuarters[i].qn);
+	}
+	var moon = new Object();
+	moon = getPhase(jd,TZ_dst);
+	if(!isQ) {
+		img = mImg(moon.D);
+	}
+
+
+	str = '<table cellpadding="0" cellspacing="0" border="0">';
+	str += '<tr>';
+	str += '<td nowrap="nowrap">';
+ str += '<img src="'+cal2Storage.cal_img_path+'2_border_3.gif" width="75" height="1" border="0" /><br />';
+ str += '<img src="'+cal2Storage.cal_img_path+'2_d'+jdate['D']+'.gif" width="37" height="15" border="0">';
+ str += '<img src="'+cal2Storage.cal_img_path+'2_t_'+flagQn+'.gif" width="38" height="15" border="0"><br />';
+ str += '<img src="pxl_b.gif" width="8" height="59" border="0" />';
+ 
+//	str += '<canvas width="59" height="59">m'+img+s_h+'.jpg</canvas>';
+ str += '<img src="'+cal2Storage.cal_img_path+'m'+img+s_h+'.jpg" width="59" height="59" border="0">';
+ 
+ str += '<img src="pxl_b.gif" width="8" height="59" border="0" /><br />';
+ str += '<img src="pxl_b.gif" width="75" height="6" border="0" /></td>';
+	str += '<td><img src="'+cal2Storage.cal_img_path+'2_border_2.gif" width="1" height="81" border="0" /></td>';
+	str += '</tr></table>';
+	return str;
+}
+function prnCal2HeaderSpacing(month)
+{
+	var a = new Array('137','152','102','89','62','73','69','119','170','135','163','155');
+	var x = 531-(parseInt(a[month],10)+12+(19*4));
+	var tmp = new Object();
+	tmp.sp2 = Math.ceil(x/2);
+	tmp.sp1 = Math.floor(x/2);
+	tmp.mwidth = a[month];
+	return tmp;
+}
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*							PRINTABLE CALENDAR 2 								*/
+/*																				*/
+/********************************************************************************/
+
+var cal3Storage = new Object();
+cal3Storage.calQuarters;
+cal3Storage.cal_img_path = "";
+
+function getCal3Screen()
+{
+	var str="", wkdy, dy, dy_str="";
+
+	// set date
+	var jd = getSS('jd');
+	if(getSS('cal_time')!=-1) {
+		jd = update_JD(jd,'','',1,getSS('cal_time'),0,0);
+	} else {
+		jd = update_JD(jd,'','',1);
+	}
+	var jdate = JD_to_date(jd);
+
+	var TZ_dst = DST_adj2( getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst') );
+
+	// set quarter phases
+	cal3Storage.calQuarters = Quarters(jd);
+
+	// table vars
+	var year = jdate['Y'];
+	year = year+"";
+	var digit_y1=year.substring(0,1), digit_y2=year.substring(1,2), digit_y3=year.substring(2,3), digit_y4=year.substring(3,4);
+
+	var td_start = '<td width="81">';
+	var td_blank = '<td width="81"><img src="'+cal3Storage.cal_img_path+'3_d0.gif" width="81" height="105" border="0" /></td>';
+	var border_1 = '<img src="'+cal3Storage.cal_img_path+'3_border_1.gif" width="2" height="105" border="0" />';
+	var border_2 = '<img src="'+cal3Storage.cal_img_path+'3_border_2.gif" width="1" height="105" border="0" />';
+
+	str = '<table width="570" cellspacing="0" cellpadding="0" border="0">';
+	str += '<tr><td align="center" bgcolor="#ffffff" colspan="9">';
+	str += '<table cellspacing="0" cellpadding="0" border="0">';
+	str += '<tr><td><img src="'+cal3Storage.cal_img_path+'3_line_h.gif" width="2" height="38" border="0" /></td><td align="center">';
+	str += '<img src="'+cal3Storage.cal_img_path+'3_line_h.gif" width="566" height="2" border="0" /><br />';
+
+	// header
+	str += '<table width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td>';
+	str += '<a href="mcp.html" onclick="parent.BackNext(\'m\',\'back\');return false;"><img src="'+cal3Storage.cal_img_path+'pxl_w.gif" width="75" height="36" border="0" /></a></td><td align="center">';
+	str += '<img src="'+cal3Storage.cal_img_path+'3_mth_'+(jdate['M']-1)+'.gif" height="36" border="0"><img src="'+cal3Storage.cal_img_path+'pxl_w.gif" width="12" height="36" border="0" />';
+	str += '<img src="'+cal3Storage.cal_img_path+'3_yr_'+digit_y1+'.gif" width="25" height="36" border="0" />';
+	str += '<img src="'+cal3Storage.cal_img_path+'3_yr_'+digit_y2+'.gif" width="25" height="36" border="0" />';
+	str += '<img src="'+cal3Storage.cal_img_path+'3_yr_'+digit_y3+'.gif" width="25" height="36" border="0" />';
+	str += '<img src="'+cal3Storage.cal_img_path+'3_yr_'+digit_y4+'.gif" width="25" height="36" border="0" />';
+	str += '</td><td align="right">';
+	str += '<a href="mcp.html" onclick="parent.BackNext(\'m\',\'next\');return false;"><img src="'+cal3Storage.cal_img_path+'pxl_w.gif" width="75" height="36" border="0" /></a>';
+	str += '</td></tr></table>';
+
+	str += '</td><td><img src="'+cal3Storage.cal_img_path+'3_border_1.gif" width="2" height="38" border="0" /></td></tr></table>';
+	str += '</td></tr>';
+	str += '<tr><td colspan="99"><img src="'+cal3Storage.cal_img_path+'3_line_h.gif" width="570" height="1" border="0" /></td></tr>';
+
+	// weekday row
+	str += '<tr>';
+	str += '<td><img src="'+cal3Storage.cal_img_path+'3_border_1.gif" width="2" height="20" border="0"></td>';
+	for(var i=0; i < 7; i++) {
+		str += '<td>';
+  str += '<img src="'+cal3Storage.cal_img_path+'3_wd_'+i+'.gif" width="80" height="20" border="0" />';  
+		str += '<img src="'+cal3Storage.cal_img_path+'3_border_2.gif" width="1" height="20" border="0">';
+		str += '</td>';
+	}
+	str += '<td><img src="'+cal3Storage.cal_img_path+'3_border_2.gif" width="1" height="20" border="0"></td>';
+	str += '</tr>';
+
+	str += '<tr>';
+
+	// initial blanks
+	wkdy = jdate['wd'];
+	str += '<td>'+border_1+'</td>';
+	for(var i=0; i < wkdy; i++) {
+		str += td_blank;
+	}
+
+	var jcal = (jdate['Y']==1582 && jdate['M']==10);
+
+	// main loop
+	do {
+
+		wkdy = jdate['wd'];
+		dy = jdate['D'];
+
+		// new row
+		if( (wkdy == 0) && (dy!=1) ) { str += '<tr><td>'+border_1+'</td>'; }
+
+		// for Oct 1582
+		if(jcal && dy==15) {
+			str += td_blank;
+			str += td_blank;
+			str += '<td>'+border_2+'</td></tr>';
+			str += '<tr><td>'+border_1+'</td>';
+			for(var i=1; i <= 7; i++) { str += td_blank; }
+			str += '<td>'+border_2+'</td></tr>';
+			str += '<tr><td>'+border_1+'</td>';
+			for(var i=1; i <= 5; i++) { str += td_blank; }
+		}
+
+		// td
+		dy_str = getDayStr3(jd,jdate);
+		str += td_start + dy_str + '</td>';
+		dy_str="";
+
+		// end row
+		if(wkdy == 6) {
+			str += '<td>'+border_2+'</td></tr>';
+		}
+
+		// set next day
+		jd = jd + 1;
+		jdate = JD_to_date(jd);
+
+	} while ( dy < jdate['D'] );
+
+	// final blanks
+	if(wkdy<6){
+		for(i=1; i < 7-wkdy; i++)
+			str += td_blank;
+		str += '<td>'+border_2+'</td></tr>';
+	}
+
+	// final rows
+	str += '<tr><td align="center" colspan="99"><img src="'+cal3Storage.cal_img_path+'3_bottom.gif" width="570" height="2" border="0" />';
+	str += '<br /><img src="'+cal3Storage.cal_img_path+'3_c.gif" width="176" height="17" border="0" /></td></tr>';
+	str += '</table>';
+
+	return str;
+}
+function getDayStr3(jd,jdate)
+{
+	var str="", img="x", isQ=false, flagQn="";
+
+	var TZ_dst = DST_adj2( getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst') );
+
+	var s_h = (getSS('s_hemisphere')=="yes")?"_s":"";
+
+	for(var i=0; i<cal3Storage.calQuarters.length; i++) {
+		if( dtStr2(cal3Storage.calQuarters[i].jd,'dd/mm/yyyy') == dtStr2(jd,'dd/mm/yyyy') ) {
+			jd = cal3Storage.calQuarters[i].jd;
+			isQ = true;
+			break;
+		}
+	}
+	if(isQ) {
+		flagQn = cal3Storage.calQuarters[i].qn;
+		img = mImg_qn(cal3Storage.calQuarters[i].qn);
+	}
+	var moon = new Object();
+	moon = getPhase(jd,TZ_dst);
+	if(!isQ) {
+		img = mImg(moon.D);
+	}
+
+	str = '<table width="1" cellpadding="0" cellspacing="0" border="0">';
+	str += '<tr><td colspan="3"><img src="'+cal3Storage.cal_img_path+'3_border_3.gif" width="81" height="1" border="0"></td></tr>';
+	str += '<tr>';
+	//str += '<td><div style="position:relative"><div style="position:absolute;left:4px;top:4px;"><img src="'+cal3Storage.cal_img_path+'3_m'+img+s_h+'.jpg" width="27" height="27" border="0"></div><img src="3_bg.jpg" width="58" height="104" border="0"></td>';
+	str += '<td>';
+	str += '<img src="'+cal3Storage.cal_img_path+'3_m'+img+s_h+'.jpg" width="31" height="30" border="0">';
+ 
+//	str += '<canvas width="31" height="30">3_m'+img+s_h+'.jpg</canvas>';
+ str += '<img src="3_bg_1.jpg" width="27" height="30" border="0"><br />';
+ str += '<img src="3_bg_2.jpg" width="58" height="74" border="0"></td>';
+	str += '<td><img src="'+cal3Storage.cal_img_path+'3_d'+jdate['D']+'.jpg" width="22" height="23" border="0"><br>';
+ str += '<img src="'+cal3Storage.cal_img_path+'3_t_'+flagQn+'.jpg" width="22" height="81" border="0"></td>';
+	str += '<td><img src="'+cal3Storage.cal_img_path+'3_border_2.gif" width="1" height="104" border="0"></td>';
+	str += '</tr></table>';
+	return str;
+}
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*									RISE/SET 									*/
+/*																				*/
+/********************************************************************************/
+
+
+//
+//  ref: Montenbruck & Pfleger section 3.8
+//
+
+//
+// together with function below, this takes
+// 		a "date" (y,m,d) and a location (lat/long)
+//		and returns times expressed in *UT*
+//		but to be useful to user, must adjust UT to the local time present at that lat/long!
+//			best done before calculating, as seen below
+//
+function getRiseSet(jd,tz,Lg,Lt,clock)
+{
+	var jdate = JD_to_date(jd);
+	var mj = mjd( jdate['D'], jdate['M'], jdate['Y'], 0.0 );
+	rs = findMoon_rise_set(mj, tz, Lg, Lt, clock);
+	return rs;
+}
+//
+//	logic same as findSun_rise_set_twi()
+//
+function findMoon_rise_set(mjd, tz, glong, glat, clock) {
+	//alert("mjd:"+mjd+" tz:"+tz+" glong:"+glong+" glat:"+glat);
+
+	var sglong, sglat, date, ym, yz, above, utrise, utset, j;
+	var yp, nz, rise, sett, hour, z1, z2, iobj, rads = 0.0174532925;
+	var quadout = new Array;
+	var sinho;
+
+	sinho = Math.sin(rads * 8/60);
+	sglat = Math.sin(rads * glat);
+	cglat = Math.cos(rads * glat);
+	date = mjd - tz/24; // time zone factored in here!
+
+	rise = false;
+	sett = false;
+	above = false;
+	hour = 1.0;
+	ym = sin_alt(1, date, hour - 1.0, glong, cglat, sglat) - sinho;
+	if (ym > 0.0) { above = true; }
+	while(hour < 25 && (sett == false || rise == false)) {
+		yz = sin_alt(1, date, hour, glong, cglat, sglat) - sinho;
+		yp = sin_alt(1, date, hour + 1.0, glong, cglat, sglat) - sinho;
+		quadout = quad(ym, yz, yp);
+		nz = quadout[0];
+		z1 = quadout[1];
+		z2 = quadout[2];
+		xe = quadout[3];
+		ye = quadout[4];
+
+		// case when one event is found in the interval
+		if (nz == 1) {
+			if (ym < 0.0) {
+				utrise = hour + z1;
+				rise = true;
+			} else {
+				utset = hour + z1;
+				sett = true;
+			}
+		}
+		// case where two events are found in this interval
+		// (rare but whole reason we are not using simple iteration)
+		if (nz == 2) {
+			if (ye < 0.0) {
+				utrise = hour + z2;
+				utset = hour + z1;
+			} else {
+				utrise = hour + z1;
+				utset = hour + z2;
+			}
+		}
+
+		// set up the next search interval
+		ym = yp;
+		hour += 2.0;
+
+	} // end of while loop
+
+	var ret = new Object();
+	if (rise == true || sett == true ) {
+		if (rise == true) {
+			ret.rise = hStr(utrise,clock);
+			ret.rise_dec = utrise;
+		} else {
+			ret.rise = 'no rise';
+		}
+		if (sett == true) {
+			ret.set = hStr(utset,clock);
+			ret.set_dec = utset;
+		} else {
+			ret.set = 'no set';
+		}
+	} else {
+		if (above == true) {
+			ret.rise = "always up";
+			ret.set = "always up";
+		} else {
+			ret.rise = "always down";
+			ret.set = "always down";
+		}
+	}
+	return ret;
+}
+
+function minimoon(t) {
+
+	var p2 = 6.283185307, arc = 206264.8062, coseps = 0.91748, sineps = 0.39778;
+	var L0, L, LS, F, D, H, S, N, DL, CB, L_moon, B_moon, V, W, X, Y, Z, RHO;
+	var mooneq = new Array;
+
+	L0 = frac(0.606433 + 1336.855225 * t);	// mean longitude of moon
+	L = p2 * frac(0.374897 + 1325.552410 * t) //mean anomaly of Moon
+	LS = p2 * frac(0.993133 + 99.997361 * t); //mean anomaly of Sun
+	D = p2 * frac(0.827361 + 1236.853086 * t); //difference in longitude of moon and sun
+	F = p2 * frac(0.259086 + 1342.227825 * t); //mean argument of latitude
+
+	// corrections to mean longitude in arcsec
+	DL =  22640 * Math.sin(L)
+	DL += -4586 * Math.sin(L - 2*D);
+	DL += +2370 * Math.sin(2*D);
+	DL +=  +769 * Math.sin(2*L);
+	DL +=  -668 * Math.sin(LS);
+	DL +=  -412 * Math.sin(2*F);
+	DL +=  -212 * Math.sin(2*L - 2*D);
+	DL +=  -206 * Math.sin(L + LS - 2*D);
+	DL +=  +192 * Math.sin(L + 2*D);
+	DL +=  -165 * Math.sin(LS - 2*D);
+	DL +=  -125 * Math.sin(D);
+	DL +=  -110 * Math.sin(L + LS);
+	DL +=  +148 * Math.sin(L - LS);
+	DL +=   -55 * Math.sin(2*F - 2*D);
+
+	// simplified form of the latitude terms
+	S = F + (DL + 412 * Math.sin(2*F) + 541* Math.sin(LS)) / arc;
+	H = F - 2*D;
+	N =   -526 * Math.sin(H);
+	N +=   +44 * Math.sin(L + H);
+	N +=   -31 * Math.sin(-L + H);
+	N +=   -23 * Math.sin(LS + H);
+	N +=   +11 * Math.sin(-LS + H);
+	N +=   -25 * Math.sin(-2*L + F);
+	N +=   +21 * Math.sin(-L + F);
+
+	// ecliptic long and lat of Moon in rads
+	L_moon = p2 * frac(L0 + DL / 1296000);
+	B_moon = (18520.0 * Math.sin(S) + N) /arc;
+
+	// equatorial coord conversion - note fixed obliquity
+	CB = Math.cos(B_moon);
+	X = CB * Math.cos(L_moon);
+	V = CB * Math.sin(L_moon);
+	W = Math.sin(B_moon);
+	Y = coseps * V - sineps * W;
+	Z = sineps * V + coseps * W
+	RHO = Math.sqrt(1.0 - Z*Z);
+	dec = (360.0 / p2) * Math.atan(Z / RHO);
+	ra = (48.0 / p2) * Math.atan(Y / (X + RHO));
+	if (ra <0 ) { ra += 24; }
+	mooneq[1] = dec;
+	mooneq[2] = ra;
+	return mooneq;
+}
+
+function minisun(t) {
+	var p2 = 6.283185307, coseps = 0.91748, sineps = 0.39778;
+	var L, M, DL, SL, X, Y, Z, RHO, ra, dec;
+	var suneq = new Array;
+
+	M = p2 * frac(0.993133 + 99.997361 * t);
+	DL = 6893.0 * Math.sin(M) + 72.0 * Math.sin(2 * M);
+	L = p2 * frac(0.7859453 + M / p2 + (6191.2 * t + DL)/1296000);
+	SL = Math.sin(L);
+	X = Math.cos(L);
+	Y = coseps * SL;
+	Z = sineps * SL;
+	RHO = Math.sqrt(1 - Z * Z);
+	dec = (360.0 / p2) * Math.atan(Z / RHO);
+	ra = (48.0 / p2) * Math.atan(Y / (X + RHO));
+	if (ra <0 ) ra += 24;
+	suneq[1] = dec;
+	suneq[2] = ra;
+	return suneq;
+}
+
+function sin_alt(iobj, mjd0, hour, glong, cglat, sglat) {
+	var mjd, t, ra, dec, tau, salt, rads = 0.0174532925;
+	var objpos = new Array;
+	mjd = mjd0 + hour/24.0;
+	t = (mjd - 51544.5) / 36525.0;
+	if (iobj == 1) {
+		objpos = minimoon(t);
+	} else {
+		objpos = minisun(t);
+	}
+	ra = objpos[2];
+	dec = objpos[1];
+	// hour angle of object
+	tau = 15.0 * (lmst(mjd, glong) - ra);
+	// sin(alt) of object using the conversion formulas
+	salt = sglat * Math.sin(rads*dec) + cglat * Math.cos(rads*dec) * Math.cos(rads*tau);
+	return salt;
+}
+//
+//	finds the parabola throuh the three points (-1,ym), (0,yz), (1, yp)
+//  and returns the coordinates of the max/min (if any) xe, ye
+//  the values of x where the parabola crosses zero (roots of the quadratic)
+//  and the number of roots (0, 1 or 2) within the interval [-1, 1]
+//
+function quad(ym, yz, yp) {
+
+	var nz, a, b, c, dis, dx, xe, ye, z1, z2, nz;
+	var quadout = new Array;
+
+	nz = 0;
+	a = 0.5 * (ym + yp) - yz;
+	b = 0.5 * (yp - ym);
+	c = yz;
+	xe = -b / (2 * a);
+	ye = (a * xe + b) * xe + c;
+	dis = b * b - 4.0 * a * c;
+	if (dis > 0)	{
+		dx = 0.5 * Math.sqrt(dis) / Math.abs(a);
+		z1 = xe - dx;
+		z2 = xe + dx;
+		if (Math.abs(z1) <= 1.0) nz += 1;
+		if (Math.abs(z2) <= 1.0) nz += 1;
+		if (z1 < -1.0) z1 = z2;
+	}
+	quadout[0] = nz;
+	quadout[1] = z1;
+	quadout[2] = z2;
+	quadout[3] = xe;
+	quadout[4] = ye;
+	return quadout;
+}
+//
+//	longitude (west negative)
+//  returns local sidereal time in hours
+//  Meeus formula 11.4 vs UTo etc
+//
+function lmst(mjd, glong) {
+	var lst, t, d;
+	d = mjd - 51544.5
+	t = d / 36525.0;
+	lst = range(280.46061837 + 360.98564736629 * d + 0.000387933 *t*t - t*t*t / 38710000);
+	return (lst/15.0 + glong/15);
+}
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*									EPHEMERIS									*/
+/*																				*/
+/********************************************************************************/
+
+
+//  this function assumes date input is UTC
+//  so the resulting data is tied to the date input UTC
+//  thus adjust by timezone*msph -before- going into function
+//
+
+function Ephemeris(jd,tz) {
+
+	var g, days,t ,L1, M1, C1, V1, Ec1, R1, Th1, Om1, Lam1, Obl, Ra1, Dec1;
+	var F, L2, Om2, M2, D, R2, R3, Bm, Lm, HLm, HBm, Ra2, Dec2, EL, EB, W, X, Y, A;
+	var Co, SLt, Psi, Il, K, P1, P2, y, m, d, bit, h, min, bk;
+
+	jd = jd - HR*tz;
+	var jdate = JD_to_date(jd);
+	var y = jdate['Y'];
+	var m = jdate['M'];
+	var d = jdate['D'];
+	var h = jdate['h'];
+	var min = jdate['m'] + (jdate['s']/60);
+	//alert(quickDtStr2(jd));
+
+	//	number of days since J2000.0
+	days = day2000(y, m, d, h + min/60);
+	t = days / 36525;
+
+	//
+	//	Sun
+	//
+	//	L1	- Mean longitude
+	//	M1	- Mean anomaly
+	//	C1	- Equation of centre
+	//	V1	- True anomaly
+	//	Ec1	- Eccentricity
+	//	R1	- Sun distance
+	//	Th1	- Theta (true longitude)
+	//	Om1	- Long Asc Node (Omega)
+	//	Lam1- Lambda (apparent longitude)
+	//	Obl	- Obliquity of ecliptic
+	//	Ra1	- Right Ascension
+	//	Dec1- Declination
+	//
+	L1 = range(280.466 + 36000.8 * t);
+	M1 = range(357.529+35999*t - 0.0001536* t*t + t*t*t/24490000);
+	C1 = (1.915 - 0.004817* t - 0.000014* t * t)* dsin(M1);
+	C1 = C1 + (0.01999 - 0.000101 * t)* dsin(2*M1);
+	C1 = C1 + 0.00029 * dsin(3*M1);
+	V1 = M1 + C1;
+	Ec1 = 0.01671 - 0.00004204 * t - 0.0000001236 * t*t;
+	R1 = 0.99972 / (1 + Ec1 * dcos(V1));
+	Th1 = L1 + C1;
+	Om1 = range(125.04 - 1934.1 * t);
+	Lam1 = Th1 - 0.00569 - 0.00478 * dsin(Om1);
+	Obl = (84381.448 - 46.815 * t)/3600;
+	Ra1 = datan2(dsin(Th1) * dcos(Obl) - dtan(0)* dsin(Obl), dcos(Th1));
+	Dec1 = dasin(dsin(0)* dcos(Obl) + dcos(0)*dsin(Obl)*dsin(Th1));
+
+	//
+	//	Moon
+	//
+	//	F 	- Argument of latitude (F)
+	//	L2 	- Mean longitude (L')
+	//	Om2 - Long. Asc. Node (Om')
+	//	M2	- Mean anomaly (M')
+	//	D	- Mean elongation (D)
+	//	D2	- 2 * D
+	//	R2	- Lunar distance (Earth - Moon distance)
+	//	R3	- Distance ratio (Sun / Moon)
+	//	Bm	- Geocentric Latitude of Moon
+	//	Lm	- Geocentric Longitude of Moon
+	//	HLm	- Heliocentric longitude
+	//	HBm	- Heliocentric latitude
+	//	Ra2	- Lunar Right Ascension
+	//	Dec2- Declination
+	//
+	F = range(93.2721 + 483202 * t - 0.003403 * t* t - t * t * t/3526000);
+	L2 = range(218.316 + 481268 * t); // could be "true long" ...
+	Om2 = range(125.045 - 1934.14 * t + 0.002071 * t * t + t * t * t/450000);
+	M2 = range(134.963 + 477199 * t + 0.008997 * t * t + t * t * t/69700);
+	D = range(297.85 + 445267 * t - 0.00163 * t * t + t * t * t/545900);
+	D2 = 2*D;
+	R2 = 1 + (-20954 * dcos(M2) - 3699 * dcos(D2 - M2) - 2956 * dcos(D2)) / 385000;
+	R3 = (R2 / R1) / 379.168831168831;
+	Bm = 5.128 * dsin(F) + 0.2806 * dsin(M2 + F);
+	Bm = Bm + 0.2777 * dsin(M2 - F) + 0.1732 * dsin(D2 - F);
+	Lm = 6.289 * dsin(M2) + 1.274 * dsin(D2 -M2) + 0.6583 * dsin(D2);
+	Lm = Lm + 0.2136 * dsin(2*M2) - 0.1851 * dsin(M1) - 0.1143 * dsin(2 * F);
+	Lm = Lm +0.0588 * dsin(D2 - 2*M2)
+	Lm = Lm + 0.0572* dsin(D2 - M1 - M2) + 0.0533* dsin(D2 + M2);
+	Lm = Lm + L2; // could be "true long"
+	Ra2 = datan2(dsin(Lm) * dcos(Obl) - dtan(Bm)* dsin(Obl), dcos(Lm));
+	Dec2 = dasin(dsin(Bm)* dcos(Obl) + dcos(Bm)*dsin(Obl)*dsin(Lm));
+	HLm = range(Lam1 + 180 + (180/Math.PI) * R3 * dcos(Bm) * dsin(Lam1 - Lm));
+	HBm = R3 * Bm;
+
+	//
+	//	Selenographic coords of the sub Earth point
+	//	This gives you the (geocentric) libration
+	//	approximating to that listed in most almanacs
+	//	Topocentric libration can be up to a degree
+	//	different either way
+	//
+	//	Physical libration ignored, as is nutation.
+	//
+	//	I	- Inclination of (mean) lunar orbit to ecliptic
+	//	EL	- Selenographic longitude of sub Earth point
+	//	EB	- Sel Lat of sub Earth point
+	//	W	- angle variable
+	//	X	- Rectangular coordinate
+	//	Y	- Rectangular coordinate
+	//	A	- Angle variable (see Meeus ch 51 for notation)
+	//
+	I = 1.54242;
+	W = Lm - Om2;
+	Y = dcos(W) * dcos(Bm);
+	X = dsin(W) * dcos(Bm) * dcos(I) - dsin(Bm) * dsin(I);
+	A = datan2(X, Y);
+	EL = A - F;
+	EB = dasin(-dsin(W) * dcos(Bm) * dsin(I) - dsin(Bm) * dcos(I));
+
+	//
+	//	Selenographic coords of sub-solar point. This point is
+	//	the 'pole' of the illuminated hemisphere of the Moon
+	//  and so describes the position of the terminator on the
+	//  lunar surface. The information is communicated through
+	//	numbers like the colongitude, and the longitude of the
+	//	terminator.
+	//
+	//	SL	- Sel Long of sub-solar point
+	//	SB	- Sel Lat of sub-solar point
+	//	W, Y, X, A	- temporary variables as for sub-Earth point
+	//	Co	- Colongitude of the Sun
+	//	SLt	- Selenographic longitude of terminator
+	//	riset - Lunar sunrise or set
+	//
+	W = range(HLm - Om2);
+	Y = dcos(W) * dcos(HBm);
+	X = dsin(W) * dcos(HBm) * dcos(I) - dsin(HBm) * dsin(I);
+	A = datan2(X, Y);
+	SL = range(A - F);
+	SB = dasin(-dsin(W) * dcos(HBm) * dsin(I) - dsin(HBm) * dcos(I));
+
+	if (SL < 90) {
+		Co = 90 - SL;
+	} else	{
+		Co = 450 - SL;
+	}
+
+	if ((Co > 90) && (Co < 270)) {
+		SLt = 180 - Co;
+	} else {
+		if	(Co < 90) {
+			SLt = 0 - Co;
+		} else {
+			SLt = 360 - Co;
+		}
+	}
+
+	//
+	//	Calculate the illuminated fraction, the position angle of the bright
+	//	limb, and the position angle of the Moons rotation axis. All position
+	//	angles relate to the North Celestial Pole - you need to work out the
+	//  'Parallactic angle' to calculate the orientation to your local zenith.
+	//
+
+	//	Iluminated fraction
+	A = dcos(Bm) * dcos(Lm - Lam1);
+	Psi = 90 - datan(A / Math.sqrt(1- A*A));
+	X = R1 * dsin(Psi);
+	Y = R3 - R1* A;
+	Il = datan2(X, Y);
+	K = (1 + dcos(Il))/2;
+	// figuring "age" extrapolated from duffet (doesnt work)
+	//var age = Math.acos(-dcos(Il));
+	//var tmp1 = dcos(Il);
+	//age = rToD(age);
+
+	//	PA bright limb
+	X = dsin(Dec1) * dcos(Dec2) - dcos(Dec1) * dsin(Dec2) * dcos(Ra1 - Ra2);
+	Y = dcos(Dec1) * dsin(Ra1 - Ra2);
+	P1 = datan2(Y, X);
+
+	//	PA Moons rotation axis
+	//	Neglects nutation and physical libration, so Meeus angle
+	//	V is just Om2
+	X = dsin(I) * dsin(Om2);
+	Y = dsin(I) * dcos(Om2) * dcos(Obl) - dcos(I) * dsin(Obl);
+	W = datan2(X, Y);
+	A = Math.sqrt(X*X + Y*Y) * dcos(Ra2 - W);
+	P2 = dasin(A / dcos(EB));
+
+	//
+	// output object
+	//
+	var o = new Object();
+	o.daynumber = round(days, 4);
+	o.julday = round(days + 2451545.0, 4);
+	o.SunDistance = round(R1, 4);
+	o.SunRa = round(Ra1 / 15, 3);
+	o.SunDec = round(Dec1, 2);
+	o.MoonDist = round(R2 * 60.268511, 2);
+	//o.MoonRa = round(Ra2 / 15, 3);
+	o.MoonRa = Ra2/15;
+	//o.MoonDec = round(Dec2, 2);
+	o.MoonDec = Dec2;
+	o.SelLatEarth = round(EB , 1);
+	o.SelLongEarth = round(EL, 1);
+	o.SelLatSun = round(SB , 1);
+	o.SelLongSun = round(SL, 1);
+	o.SelColongSun = round(Co, 2);
+	o.SelLongTerm = round(SLt, 1);
+	o.PhaseAngle = round(Il, 2);
+	//o.Age = age;
+	o.SelIlum = round(K, 3);
+	o.SelPaBl = round(P1, 1);
+	o.SelPaPole = round(P2, 1);
+	//o.D = D;
+
+	//o.tmp1 = tmp1;
+
+	return o;
+}
+
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*									QUARTERS									*/
+/*																				*/
+/********************************************************************************/
+
+
+// REM: a very slight difference between this and the old decDt()
+// apparently only about a second difference, or less
+function decYear( Y, M, D, h, m, s )
+{
+	var jd = date_to_JD(Y,M,D,h,m,s);
+	//var tmp = JD_to_date(jd);
+	//alert(dtStr2(tmp,'mm/dd/yyyy')+ " " + tStr2(tmp,'24hr'));
+	var jd0 = date_to_JD(Y);
+	//var tmp = JD_to_date(jd0);
+	//alert(dtStr2(tmp,'mm/dd/yyyy')+ " " + tStr2(tmp,'24hr'));
+	var jd1 = date_to_JD(Y+1);
+	//var tmp = JD_to_date(jd1);
+	//alert(dtStr2(tmp,'mm/dd/yyyy')+ " " + tStr2(tmp,'24hr'));
+
+	var dec = (jd-jd0)/(jd1-jd0);
+	return Y+dec;
+}
+function listQuarters( qn, month, day, jd_start, max )
+{
+	var results = new Array();
+
+	if(month && day) {
+		var jdate = JD_to_date(jd_start);
+		var year = jdate['Y'];
+		var jd = update_JD(jd_start,'',month,day);
+		var a;
+		var count=0, abort=0, temp=0;
+		while( count<max && abort<999 ) {
+			a = Quarters( jd, 5, qn );
+			for(var i=0; i<a.length; i++) {
+				if( dtStr2(a[i].jd,'dd/mm/yyyy') == dtStr2(jd,'dd/mm/yyyy') ) {
+					//alert(a[i].jd);
+					results[count] = a[i];
+					count ++;
+				}
+			}
+			year++;
+			//dt.setFullYear(year);
+			jd = update_JD(jd,year);
+			abort ++;
+		}
+
+	} else {
+		var a = Quarters( jd_start, max-0+4, qn );
+		var count=0;
+		for(var i=0; i<a.length; i++) {
+			if( a[i].jd>jd_start && count<max ) {
+				results[count] = a[i];
+				count ++;
+			}
+		}
+	}
+	count = 0;
+	var str = '<table cellpadding="0" cellspacing="0" border="0">';
+	var jdate;
+	for(var i=0; i<results.length; i++) {
+		count ++;
+		jdate = JD_to_date(results[i].jd);
+		str += '<tr>';
+		str += '<td align="right">'+count+'.</td>';
+		str += '<td style="padding-left:5px">'+aMs[jdate['M']-1]+'</td>';
+		str += '<td align="right" style="padding-left:5px">'+jdate['D']+'</td>';
+		str += '<td style="padding-left:5px">'+jdate['Y']+'</td>';
+		str += '<td align="right" style="padding-left:5px">'+tStr2(jdate,getSS('clock'))+'</td>';
+		str += '<td style="padding-left:5px">('+aDWs[jdate['wd']]+')</td>';
+		str += '</tr>';
+		//str += "("+count+") "+aM[results[i].dt.getMonth()]+" "+results[i].dt.getDate()+", "+results[i].dt.getFullYear()+" "+tStr(results[i].dt,getSS('clock'));
+		//str += " ["+results[i].q+"]["+results[i].k2+"]";
+		//str += "<br />";
+	}
+	str += '</table>';
+	return str;
+}
+
+function Quarters( jd, max, qn )
+{
+	var max=max?max:15;
+	var qn_target = false;
+	if(qn==undefined) { qn=0; } else { qn_target=true; }
+	var jdate = JD_to_date(jd);
+	var dyear = decYear(jdate['Y'],jdate['M'],jdate['D'],jdate['h'],jdate['m'],jdate['s']);
+	var k1 = (dyear - 2000) * 12.3685;
+	var k2 = (Math.floor(k1)-1) + qn*0.25; // so far this works: basically goes back roughly 1 month (4 qtrs), then "targets" the target phase (qn*0.25)
+
+	var a = new Array(), o;
+	for( var i=0; i<max; i++ ) {
+
+		var o = new Object();
+		o.jd = getQuarter(qn,k2);
+		o.k1 = rnd(k1,2);
+		o.k2 = rnd(k2,2);
+		o.qn = qn;
+		o.q = qQ(qn);
+
+		a[i] = o;
+
+		if(qn_target) {
+			k2 = k2 + 1;
+		} else {
+			k2 = k2 + 0.25;
+			if(qn==3) { qn = 0; } else { qn = qn + 1; }
+		}
+	}
+	return a;
+}
+function fetchQuarter(a,qn,jd)
+{
+	for(var i=0; i<a.length; i++) {
+		if( a[i].q==qQ(qn) && (a[i].jd>jd) ) {
+			return a[i];
+		}
+	}
+}
+function fetchPrevNM(a,jd)
+{
+	var prev;
+	for(var i=0; i<a.length; i++) {
+		if( prev && a[i].q=='NM' && a[i].jd>jd ) {
+			return prev;
+		}
+		if( a[i].q=='NM' ) {
+			//if(!prev && a[i].jd>jd) {
+			//	alert("error in getting prev new moon");
+			//}
+			prev = a[i];
+		}
+	}
+}
+function getAge(jdNM,jd)
+{
+	var o = new Object();
+	//var nm = fetchPrevNM(a,jd);
+	//x = (jd-nm.jd)/MSPD;
+	x = jd-jdNM;
+	o.days = rnd(x,2);
+	o.d = intPart(x);
+	var t = h_to_hms(decPart(x)*24);
+	o.h = t['h'];
+	o.m = t['m'];
+	o.s = t['s'];
+	return o;
+}
+function getQuarter(qn,k)
+{
+	var T = k/1236.85;
+
+	var JDE = 2451550.09766 + (29.530588861*k) + (0.00015437*Math.pow(T,2)) - (0.000000150*Math.pow(T,3)) + (0.00000000073*Math.pow(T,4)); // julian ephemeris days
+	//JDE = 2467636.49186; // 2044
+	//JDE = 2443192.941102; // 1977.13
+	//JDE = 2443192.65118; // 1977.13, corrected
+
+	// corrections
+	JDE = qCorrections(JDE,qn,k,T);
+
+	var jd = JDE; // assumed ok
+
+	var TZ_dst = DST_adj2( getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst') );
+
+	jd = jd + HR*TZ_dst;
+
+	return jd;
+
+}
+function qQ(qn)
+{
+	if(qn==0) { return 'NM'; }
+	else if(qn==1) { return 'FQ'; }
+	else if(qn==2) { return 'FM'; }
+	else if(qn==3) { return 'LQ'; }
+}
+
+function qCorrections(JDE,q,k,T)
+{
+	// eccentricity of earth's orbit
+	var E = 1 - 0.002516*T - 0.0000074*T*T;
+	E = degAdj(E);
+	// sun's mean anomaly at time JDE
+	var M = 2.5534 + 29.10535670*k - 0.0000014*T*T - 0.00000011*T*T*T;
+	M = degAdj(M);
+	// moon's mean anomaly
+	var M1 = 201.5643 + 385.81693528*k + 0.0107582*Math.pow(T,2) + 0.00001238*Math.pow(T,3) - 0.000000058*Math.pow(T,4);
+	M1 = degAdj(M1);
+	// moon's argument of latitude
+	var F = 160.7108 + 390.67050284*k - 0.0016118*Math.pow(T,2) - 0.00000227*Math.pow(T,3) + 0.000000011*Math.pow(T,4);
+	F = degAdj(F);
+	// longitude of ascending node of the lunar orbit
+	var LN = 124.7746 - 1.56375588*k + 0.0020672*Math.pow(T,2) + 0.00000215*Math.pow(T,3);
+	LN = degAdj(LN);
+
+	var c1=0,c2=0;
+	if( q==0 || q==2 ) {
+		c1 = FN_Corrections(q,E,M,M1,F,LN);
+	} else if( q==1 || q==3 ) {
+		c1 = FLQ_Corrections(q,E,M,M1,F,LN);
+		//alert(c1);
+	}
+	c2 = P_Corrections(k,T);
+	//alert(c2);
+	JDE += c1 + c2;
+	return JDE;
+}
+function P_Corrections(k,T)
+{
+	var s = 0;
+
+	s += 0.000325 * dsin(299.77 + 0.107408*k - 0.009173*T*T);
+	s += 0.000165 * dsin(251.88 + 0.016321*k);
+	s += 0.000164 * dsin(251.83 + 26.651886*k);
+	s += 0.000126 * dsin(349.42 + 36.412478*k);
+	s += 0.000110 * dsin(84.66 + 18.206239*k);
+	s += 0.000062 * dsin(141.74 + 53.303771*k);
+	s += 0.000060 * dsin(207.14 + 2.453732*k);
+	s += 0.000056 * dsin(154.84 + 7.306860*k);
+	s += 0.000047 * dsin(34.52 + 27.261239*k);
+	s += 0.000042 * dsin(207.19 + 0.121824*k);
+	s += 0.000040 * dsin(291.34 + 1.844379*k);
+	s += 0.000037 * dsin(161.72 + 24.198154*k);
+	s += 0.000035 * dsin(239.56 + 25.513099*k);
+	s += 0.000023 * dsin(331.55 + 3.592518*k);
+	//alert(s);
+	return s;
+}
+function NM_Corrections(E,M,M1,F,LN)
+{
+	var a = new Array(
+		-0.40720,
+		+0.17241*E,
+		+0.01608,
+		+0.01039,
+		+0.00739*E,
+		-0.00514*E,
+		+0.00208*E*E,
+		-0.00111,
+		-0.00057,
+		+0.00056*E,
+		-0.00042,
+		+0.00042*E,
+		+0.00038*E,
+		-0.00024*E,
+		-0.00017,
+		-0.00007,
+		+0.00004,
+		+0.00004,
+		+0.00003,
+		+0.00003,
+		-0.00003,
+		+0.00003,
+		-0.00002,
+		-0.00002,
+		+0.00002
+	);
+	var b = new Array(
+		M1,
+		M,
+		2*M1,
+		2*F,
+		M1-M,
+		M1+M,
+		2*M,
+		M1-2*F,
+		M1+2*F,
+		2*M1+M,
+		3*M1,
+		M+2*F,
+		M-2*F,
+		2*M1-M,
+		LN,
+		M1+2*M,
+		2*M1-2*F,
+		3*M,
+		M1+M-2*F,
+		2*M1+2*F,
+		M1+M+2*F,
+		M1-M+2*F,
+		M1-M-2*F,
+		3*M1+M,
+		4*M1
+	);
+	var sum=0;
+	for(var i=0; i<a.length; i++) {
+		sum += a[i]*dsin(b[i]);
+	}
+	//alert(sum);
+	return sum;
+}
+
+function FN_Corrections(q,E,M,M1,F,LN)
+{
+	var sum = 0;
+	var NM = new Array(
+		-0.40720,
+		+0.17241*E,
+		+0.01608,
+		+0.01039,
+		+0.00739*E,
+		-0.00514*E,
+		+0.00208*E*E
+	);
+	var FM = new Array(
+		-0.40614,
+		+0.17302*E,
+		+0.01614,
+		+0.01043,
+		+0.00734*E,
+		-0.00515*E,
+		+0.00209*E*E
+	);
+	var mult1 = new Array(
+		M1,
+		M,
+		2*M1,
+		2*F,
+		M1-M,
+		M1+M,
+		2*M
+	);
+	if(q==0) { a_use = NM; } else if(q==2) { a_use = FM; }
+	for(var i=0; i<a_use.length; i++) {
+		sum += a_use[i]*dsin(mult1[i]);
+	}
+	var FN = new Array(
+		-0.00111,
+		-0.00057,
+		+0.00056*E,
+		-0.00042,
+		+0.00042*E,
+		+0.00038*E,
+		-0.00024*E,
+		-0.00017,
+		-0.00007,
+		+0.00004,
+		+0.00004,
+		+0.00003,
+		+0.00003,
+		-0.00003,
+		+0.00003,
+		-0.00002,
+		-0.00002,
+		+0.00002
+	);
+	var mult2 = new Array(
+		M1-2*F,
+		M1+2*F,
+		2*M1+M,
+		3*M1,
+		M+2*F,
+		M-2*F,
+		2*M1-M,
+		LN,
+		M1+2*M,
+		2*M1-2*F,
+		3*M,
+		M1+M-2*F,
+		2*M1+2*F,
+		M1+M+2*F,
+		M1-M+2*F,
+		M1-M-2*F,
+		3*M1+M,
+		4*M1
+	);
+	for(var i=0; i<FN.length; i++) {
+		sum += FN[i]*dsin(mult2[i]);
+	}
+	//alert(sum);
+	return sum;
+}
+
+function FLQ_Corrections(q,E,M,M1,F,LN)
+{
+	var a = new Array(
+		-0.62801,
+		+0.17172*E,
+		-0.01183*E,
+		+0.00862,
+		+0.00804,
+		+0.00454*E,
+		+0.00204*E*E,
+		-0.00180,
+		-0.00070,
+		-0.00040,
+		-0.00034*E,
+		+0.00032*E,
+		+0.00032*E,
+		-0.00028*E*E,
+		+0.00027*E,
+		-0.00017,
+		-0.00005,
+		+0.00004,
+		-0.00004,
+		+0.00004,
+		+0.00003,
+		+0.00003,
+		+0.00002,
+		+0.00002,
+		-0.00002
+	);
+	var b = new Array(
+		M1,
+		M,
+		M1+M,
+		2*M1,
+		2*F,
+		M1-M,
+		2*M,
+		M1-2*F,
+		M1+2*F,
+		3*M1,
+		2*M1-M,
+		M+2*F,
+		M-2*F,
+		M1+2*M,
+		2*M1+M,
+		LN,
+		M1-M-2*F,
+		2*M1+2*F,
+		M1+M+2*F,
+		M1-2*M,
+		M1+M-2*F,
+		3*M,
+		2*M1-2*F,
+		M1-M+2*F,
+		3*M1+M
+	);
+	var sum=0;
+	for(var i=0; i<a.length; i++) {
+		sum += a[i]*dsin(b[i]);
+	}
+	//alert(sum);
+
+	var W = 0.00306 - 0.00038*E*dcos(M) + 0.00026*dcos(M1) - 0.00002*dcos(M1-M) + 0.00002*dcos(M1+M) + 0.00002*dcos(2*F);
+	if(q==3) { W = -W; }
+	//alert(W);
+	sum = sum + W;
+
+	return sum;
+}
+
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*								HORIZON (AZ/ALT)								*/
+/*																				*/
+/********************************************************************************/
+
+/*
+	1. Hour angle (H)
+		var H = LST - ra; (all dec hrs)
+		- convert UT to GST
+			(find JD at 0h) alt method
+		- convert GST to LST
+			(GST - long converted to hrs)
+	2. H, ra, d are dec degrees
+*/
+
+// ra assumed in dec hours
+// dec, Lg, Lt assumed in dec degrees
+// this function assumes UT for date values
+function Horizon(ra,dec,jd,tz,Lg,Lt)
+{
+	//
+	// hour angle: all vars in decimal hours
+	//
+
+	jd = jd - HR*tz;
+	var jdate = JD_to_date(jd);
+
+	//var dt = new Date(msdate);
+	//var gst = UT_to_GST( dt.getFullYear(), dt.getMonth()+1, dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds() );
+	var gst = UT_to_GST( jdate['Y'], jdate['M'], jdate['D'], jdate['h'], jdate['m'], jdate['s'] );
+
+	var Lg = -Lg/15; // this formula assumes opposite Lg signs (+ = -)
+		// meeus testing...
+		//gst = xms_to_x(8,34,57);
+		//Lg = xms_to_x(77,3,56)/15; // (method to get line below)
+		//Lg = xms_to_x(5,8,15.7);
+		//ra = xms_to_x(23,9,16.641);
+		//dec = xms_to_x(-6,-43,-11.61);
+		//Lt = xms_to_x(38,55,17);
+		//alert(gst);
+		//alert( str_xms(x_to_xms(gst)) );
+	var H = gst - Lg - ra;
+		// duffet testing...p. 36
+		//H = xms_to_x(5,51,44);
+		//dec = xms_to_x(23,13,10);
+		//Lt = 52.0;
+	//alert( str_xms(x_to_xms(H)) );
+	H = degAdj(H * 15);
+	//
+	// coord formula; all vars in decimal degrees
+	//
+	var alt = dasin(dsin(Lt)*dsin(dec) + dcos(Lt)*dcos(dec)*dcos(H));
+	// Meeus Az
+	var Y = dsin(H);
+	var X = dcos(H)*dsin(Lt) - dtan(dec)*dcos(Lt);
+	var az = datan2(Y,X);
+	// Duffet Az (alternative) exact same results, but az is already measured from North
+	//var Y = -dcos(dec)*dcos(Lt)*dsin(H);
+	//var X = dsin(dec) - dsin(Lt)*dsin(alt);
+	//var az = datan2(Y,X);
+
+	//
+	// return obj
+	//
+	var o = new Object();
+	o.az1 = az;
+	o.az = degAdj(az+180);
+	o.alt = alt;
+	return o;
+}
+// Universal Time converted to Greenwich Sidereal Time
+// this function assumes UT for date values (pre-adjusted from local time)
+function UT_to_GST(Y,M,D,h,m,s)
+{
+	var T, O, o;
+	D = dhms_to_d(D,h,m,s);
+	//alert("y:"+Y+" m:"+M+" d:"+D);
+	var jd = date_to_JD(Y, M, D);
+	T = (jd - 2451545.0)/36525;
+	var gst = 280.46061837+360.98564736629*(jd-2451545.0) + 0.000387933*T*T - T*T*T/38710000;
+	gst = degAdj(gst);
+	gst = gst/15; // hrs
+	return gst;
+}
+// this also works!
+function UT_to_GST2(msdate)
+{
+	var T, O, o;
+	var dt = new Date(msdate);
+	var y=dt.getUTCFullYear();
+	var m=dt.getUTCMonth()+1;
+	var d = dhms_to_d(dt.getUTCDate(),dt.getUTCHours(),dt.getUTCMinutes(),dt.getUTCSeconds());
+	//alert(date_to_JD(y, m, d));
+		// testing...
+		//var y=1987, m=4, d = dhms_to_d(10,19,21,0); // meeus
+		//var y = 1980, m=4, d = dhms_to_d(22,14,36,51.67); // duffet p.17
+	var jd = date_to_JD(y, m, d);
+	//alert(jd);
+	T = (jd - 2451545.0)/36525;
+	var gst = 280.46061837+360.98564736629*(jd-2451545.0) + 0.000387933*T*T - T*T*T/38710000;
+	gst = degAdj(gst);
+	gst = gst/15; // hrs
+	//var x = x_to_ms(gst,1);
+	//alert( "x:"+degAdj(x['x'])+" m:"+x['m']+" s:"+x['s']);
+	return gst;
+}
+
+
+
+
+
+/*+******************************************************************************/
+/*																				*/
+/*									GETPHASE 									*/
+/*																				*/
+/********************************************************************************/
+
+// ref: Duffet-Smith
+
+var EPOCH1 = date_to_JD( 1990, 1, 1 );
+
+function dToR (d) { return d*2*Math.PI/360; }
+function rToD (r) { return r/(2*Math.PI)*360; }
+
+function getPhase(jd,TZ_dst)
+{
+	jd = jd - HR*TZ_dst;
+	var dn = jd - EPOCH1 + 1; // must add 1, for some reason
+
+	var sun = sunPos(dn);
+
+	// get moon's true longitude; formerly mTrueL()
+	//
+	var tmp;
+	var LO = 318.351648;
+	var PO = 36.340410;
+	var NO = 318.510107;
+	var l = degAdj(13.1763966*dn + LO);
+	var Mm = degAdj(l - 0.1114041*dn-PO);
+	var N = degAdj(NO - 0.0529539*dn);
+	tmp = (2*(l - sun.L))-Mm;
+	var Ev = 1.2739*Math.sin(dToR(tmp));
+	tmp = dToR(sun.M);
+	var Ae = 0.1858*Math.sin(tmp);
+	var A3 = 0.37*Math.sin(tmp);
+	var Mm1 = Mm + Ev - Ae - A3;
+	//this.Mm1 = Mm1;
+	var Ec = 6.2886*Math.sin(dToR(Mm1));
+	//this.Ec = Ec;
+	var A4 = 0.214*Math.sin(2*dToR(Mm1));
+	var l1 = l + Ev + Ec - Ae + A4;
+	var V = 0.6583*Math.sin(dToR(2*(l1-sun.L)));
+	var mTrueL = l1 + V;
+
+	// final: phase "age" computation
+	//
+	var D = mTrueL - sun.L; // moon's true orbital long minus sun's ecliptic long
+	D = degAdj(D);  // REM: rarely looped more than once ... in either direction
+					// D is "age" in degrees
+	var F = 0.5*(1-Math.cos(dToR(D))); // "phase" (illum fraction (decimal))
+	F = F*100; // phase in degrees
+	var tmp = new Object();
+	tmp.phase = F;
+	tmp.D = D;
+	tmp.age = D/360*100;
+	return tmp;
+}
+function sunPos(dn)
+{
+	var EL_E = 279.403303;
+	var EL_P = 282.768422;
+	var N = (360/365.242191) * dn;
+	N = degAdj(N);
+	var M = N + EL_E - EL_P;
+	M = degAdj(M); // sun's mean anomaly
+	var E = (360/Math.PI)*0.016713*Math.sin(dToR(M));
+	var L = N + E + EL_E;
+	L = degAdj(L);
+	//return rnd(L,6);
+	var tmp = new Object();
+	tmp.M = M;
+	tmp.L = L;
+	return tmp;
+}
+function phN(ph) // REM: ph = D
+{
+	var n;
+	//if(!ph) { ph = this.D; }
+	if( (ph>=0 && ph<6) || (ph>=354 && ph<=360) ) { n=0; }
+	else if( ph>=6 && ph<84 ) { n=1; }
+	else if( ph>=84 && ph<96 ) { n=2; }
+	else if( ph>=96 && ph<174 ) { n=3; }
+	else if( ph>=174 && ph<186 ) { n=4; }
+	else if( ph>=186 && ph<264 ) { n=5; }
+	else if( ph>=264 && ph<276 ) { n=6; }
+	else if( ph>=276 && ph<354 ) { n=7; }
+	return n;
+}
+function mImg_qn(qn)
+{
+	if(qn==0) { return "0"; }
+	if(qn==1) { return "8"; }
+	if(qn==2) { return "16"; }
+	if(qn==3) { return "24"; }
+}
+function mImg(ph) // REM: ph = D
+{
+	var n = phN(ph);
+	if(n==0) { return "0"; }
+	if(n==2) { return "8"; }
+	if(n==4) { return "16"; }
+	if(n==6) { return "24"; }
+	var i, cnt;
+	if(n==1) {
+		cnt = 1;
+		for(i=6; i<84; i=i+11.2) {
+			if(ph>=i && ph<i+11.2) {
+				return cnt;
+			}
+			cnt++;
+		}
+	} else if(n==3) {
+		cnt = 9;
+		for(i=96; i<174; i=i+11.2) {
+			if(ph>=i && ph<i+11.2) {
+				return cnt;
+			}
+			cnt++;
+		}
+	} else if(n==5) {
+		cnt = 17;
+		for(i=186; i<264; i=i+11.2) {
+			if(ph>=i && ph<i+11.2) {
+				return cnt;
+			}
+			cnt++;
+		}
+	} else if(n==7) {
+		cnt = 25;
+		for(i=276; i<354; i=i+11.2) {
+			if(ph>=i && ph<i+11.2) {
+				return cnt;
+			}
+			cnt++;
+		}
+	}
+}
+
+
+
+/* ----- NOT USED OR TEST FUNCTIONS ----- */
+
+function resizePrintCal1()
+{
+	var obj = document.getElementById('cal2_screen_2');
+//	obj.style.height = document.body.offsetHeight-125;
+	obj.style.width = document.body.offsetWidth-100;
+}
+function addStuff()
+{
+	var str = "";
+	for(i=0;i<20;i++) {
+		str += '<p />test';
+	}
+	return str;
+}
+function debug_getSettingsStr()
+{
+	var str = "";
+	str += "TZ: "+getSS('tz');
+	str += "\nSys TZ: "+getSS('sys_tz');
+	//str += "\nLt: "+getSS('Lt');
+	str += "\nLt_d: "+getSS('Lt_d');
+	str += "\nLt_m: "+getSS('Lt_m');
+	str += "\nLt_s: "+getSS('Lt_s');
+	str += "\nLt_dir: "+getSS('Lt_dir');
+	//str += "\nLg: "+getSS('Lg');
+	str += "\nLg_d: "+getSS('Lg_d');
+	str += "\nLg_m: "+getSS('Lg_m');
+	str += "\nLg_s: "+getSS('Lg_s');
+	str += "\nLg_dir: "+getSS('Lg_dir');
+	str += "\njdate: " + getSS('jd');
+	str += "\ndt_format: " + getSS('dt_format');
+	str += "\nclock: " + getSS('clock');
+	str += "\ncal_time: " + getSS('cal_time');
+	str += "\nrefresh: " + getSS('refresh');
+	str += "\nDate: " + dtStr(getSS('jd'),getSS('dt_format')) + " " + tStr(getSS('jd'),getSS('clock'),1);
+	str += "\ncV: "+getSS('cV');
+	return str;
+}
+</script>
+
+<!-- // <link rel="stylesheet" href="css.css" type="text/css" /> // -->
+
+<style type="text/css">
+
+body, td, p { font-family: tahoma,verdana,arial,sans-serif; font-size: 11px; color:#dddddd; }
+
+.style1 { font-family: tahoma,verdana,arial,sans-serif; font-size: 10px; }
+.style2 { font-family: tahoma,verdana,arial,sans-serif; font-size: 11px; }
+.style3 { font-family: tahoma,verdana,arial,sans-serif; font-size: 12px; }
+.style4 { font-family: tahoma,verdana,arial,sans-serif; font-size: 13px; }
+
+a:link { color: #8FB7FF; text-decoration:none; }
+a:visited { color: #8FB7FF; text-decoration:none; }
+a:hover { color: #8FB7FF; text-decoration:none; }
+
+.mainNav { cursor:hand; color:#8FB7FF; }
+.subNav { cursor:hand; font-size:10px; color:#47669E; padding:2px; padding-left:6px; padding-right:6px; }
+
+.TDLlabel { color:#ffffff; }
+.TDLdata { color:orange; font-weight:bold; }
+.f1FieldStyle { background:#BAC6DA; color:#000000; font-family:tahoma,arial,verdana,sans-serif; font-size:12px; }
+
+.f2Label { color:#666666; }
+.f2FieldStyle { background:#BAC6DA; color:#000000; font-family:tahoma,arial,verdana,sans-serif; font-size:12px; }
+
+.dayInfoLabel { font-size:11px; color:#D8D7D7; }
+.dayInfoData { color:#CFFECD; }
+
+.calDayInfoLabel { font-size:10px; color:#D8D7D7; }
+.calDayInfoData { color:#FDE698; }
+.calDayInfoDataB { color:#BBD7FD; }
+
+a.calDate:link { color: #ffffff; text-decoration: none; }
+a.calDate:visited { color: #ffffff; text-decoration: none; }
+a.calDate:hover { color: #ffffff; text-decoration: none; }
+
+.calQtr { color:#BBD7FD; }
+a.calQtr:link { color: #ffffff; text-decoration: none; }
+a.calQtr:visited { color: #ffffff; text-decoration: none; }
+a.calQtr:hover { color: #ffffff; text-decoration: none; }
+
+.contentPage {
+	background-color:#000000;
+	background-image:url('bg_s.gif');
+	background-attachment:fixed;
+}
+.contentPage2 {
+	background-color:#ffffff;
+}
+
+select.style1 {
+   font-size:11px;
+   background-color:#294570;
+   color:#ffffff;
+}
+
+.inputBtn {
+	background:#666666;
+	border: 1px solid #ffffff;
+	color:#ffffff;
+	font-size : 11px;
+  	font-family : tahoma,verdana,arial,sans-serif;
+  	font-weight: bold;
+}
+.inputBtn2 {
+	background:#8796AF;
+	border: 1px solid #999999;
+	color:#000000;
+	font-size : 10px;
+  	font-family : tahoma,verdana,arial,sans-serif;
+}
+.pseudoInputBtn1 {
+	background:#666666;
+	border: 1px solid #ffffff;
+	color:#ffffff;
+	font-size : 10px;
+  	font-family : tahoma,verdana,arial,sans-serif;
+  	font-weight: bold;
+  	padding-left:5px;
+  	padding-right:5px;
+  	cursor:hand;
+}
+.pseudoInputBtn2 {
+	height:11px;
+	background:#222222;
+	border:1px solid #333333;
+	color:#999999;
+	font-size:9px;
+  	font-family:tahoma,verdana,arial,sans-serif;
+  	letter-spacing:.1em;
+  	padding-left:2px;
+  	padding-right:2px;
+  	text-align:center;
+  	cursor:hand;
+}
+
+.border1 {
+	border: 1px solid #9A9999;
+}
+
+.menustyle { position:absolute; left:0; top:0; visibility:hidden; }
+
+.formfield2 { border: 1px solid #000000; background:#ffffff; color:#000000; margin: 0px; font-family:tahoma,arial,verdana,sans-serif; font-size:11px; }
+
+select.style2 {
+   font-size:11px;
+   background-color:#ffffff;
+   color:#000000;
+}
+
+.cal1width { width:630px; }
+.pwidth { width:100%; }
+.palign { align:center; }
+
+</style>
+
+<!-- // <link rel="stylesheet" href="print.css" type="text/css" media="print"> // -->
+
+</head>
+
+<body onload="mainInit();" onresize="resizeMain(1);" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" bgcolor="#000000" text="#000000" link="#696D6A" vlink="#696D6A" alink="#FC8A10" background="bg_s.gif">
+
+
+<!-- outside container table -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td width="100%" valign="top" style="padding:20px;padding-top:18px">
+
+<!-- // ACTIVATE BAR // -->
+<div id="activationNote" style="display:none">
+<table width="100%" bgcolor="#FCC621" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #383838;margin-bottom:5px;">
+	<tr>
+		<td height="20" align="center" style="cursor:hand;" onclick="top.showActivationDialog()">
+		<b><span style="color:#000000;">Click Here To Activate This Software</span></b>
+		</td>
+	</tr>
+</table>
+</div>
+
+<!-- // TOP NAV // -->
+<table width="100%"><tr><td>
+<table bg!color="#222222" bgcolor="#000000" height="20" cellpadding="0" cellspacing="0" border="0" style="border: 1px solid #383838;">
+	<tr>
+		<td width="85" align="center" style="border-right:1px solid #383838;" class="mainNav" onmouseover="mainNavOn(this)" onmouseout="mainNavOff(this)" onclick="makeScreen('main_screen');return false;">Day</td>
+		<td width="85" align="center" style="border-right:1px solid #383838;" class="mainNav" onmouseover="mainNavOn(this)" onmouseout="mainNavOff(this)" onclick="makeScreen('cal1_screen');return false;">Month</td>
+		<td width="85" align="center" style="border-right:1px solid #383838;" class="mainNav" onmouseover="mainNavOn(this)" onmouseout="mainNavOff(this)" onclick="makeScreen('find_screen');return false;">Data</td>
+		<!--td width="85" align="center" style="border-right:1px solid #383838;" class="mainNav" onmouseover="mainNavOn(this)" onmouseout="mainNavOff(this)" onclick="makeScreen('print_screen');return false;">Print</td-->
+		<!--td width="85" align="center" style="border-right:1px solid #383838;" class="mainNav" onmouseover="mainNavOn(this)" onmouseout="mainNavOff(this)" onclick="makeScreen('export_screen');return false;">Export</td-->
+		<td width="85" align="center" class="mainNav" onmouseover="mainNavOn(this)" onmouseout="mainNavOff(this)" onclick="makeScreen('help_screen');return false;">About</td>
+	
+	</tr>
+</table >
+ </td>
+	<td width="20" align="center" onmouseover="mainNavOn(this)" onmouseout="mainNavOff(this)" onclick="makeScreen('config_screen');return false;"><img src="gear_wheel.png"></td>
+ </tr>
+</table>
+<!-- // TOP TIME/DATE/LOCATION BAR // -->
+<table id="targetInfo" width="100%" height="20" bg!color="#222222" bgcolor="#000000" cellpadding="0" cellspacing="0" border="0" style="margin-top:3px; margin-bottom:3px; border:1px solid #383838;">
+<form name="topTDLform" style="margin:0px">
+	<tr>
+		<td>
+		<table cellpadding="0" cellspacing="0" border="0">
+			<tr>
+				<!--<td class="TDLlabel" style="padding-left:10px;padding-right:15px;color:#999999" nowrap="1">&nbsp;&nbsp;--><!--&#149;--><!--<b><div id="TDLtargetTxt" style="color:#999999"></div></b>--><!--Target<img src="icon_ptr2.gif" border="0" style="vertical-align:middle" /></td>-->
+				<td halign="center" valign="top" class="TDLlabel" style="cursor:hand;padding-left:15px;" onclick="show_f1('id_f1_date_time');return false;" nowrap="1"><img src="menu.png">&nbsp;Date & Time:&nbsp;</td>
+				<td halign="center" valign="top" class="TDLlabel" style="padding-right:15px;" nowrap="1"><div id="container1" style="position:relative"><div id="id_f1_date_time" style="position:absolute;left:-65px;z-index:10;visibility:hidden;background-color:#000000;padding:2px;padding-left:3px;padding-right:3px;border:1px solid orange"><input type="text" class="f1FieldStyle" name="f1_date" id="f1_date" value="" size="10" maxlength="10" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('date')">&nbsp;<input type="text" class="f1FieldStyle" name="f1_time" id="f1_time" value="" size="10" maxlength="11" onfocus="f1Focus(this)" onblur="f1Focus(this);" onkeypress="return inputCheck('time')">&nbsp;<input type="submit" class="inputBtn" name="" value="Apply" onclick="handleSetDateTime('f1_date','f1_time','id_f1_date_time');return false;">&nbsp;<input type="button" class="inputBtn" name="" value="Now" onclick="setNow();hide_f1('id_f1_date_time');return false;"></div></div><div id="TDLdateTxt" class="TDLdata"></div></td>
+
+				<td halign="center" class="TDLlabel" style="cursor:hand" onclick="show_f1('id_f1_tz');return false;" nowrap="1"><img src="menu.png">&nbsp;Time Zone:&nbsp;</td>
+				<td halign="center" class="TDLlabel" style="padding-right:15px;" nowrap="1"><div id="container3" style="position:relative"><div id="id_f1_tz" style="position:absolute;left:-55px;visibility:hidden;background-color:#000000;padding:2px;padding-left:3px;padding-right:3px;border:1px solid orange"><select class="f1FieldStyle" name="f1_tz" id="f1_tz" onfocus="f1Focus(this)" onblur="f1Focus(this);"></select>&nbsp;<input type="submit" class="inputBtn" name="" value="Apply" onclick="setTZ(getSelectedValue(document.getElementById('f1_tz')));hide_f1('id_f1_tz');return false;"></div></div><div id="TDLtzTxt" class="TDLdata"></div></td>
+
+				<td halign="center" class="TDLlabel" style="cursor:hand" onclick="show_f1('id_f1_LtLg');return false;" nowrap="1"><img src="menu.png">&nbsp;Location:&nbsp;&nbsp;</td>
+				<td halign="center" class="TDLlabel" style="padding-right:15px;" nowrap="1"><div id="container4" style="position:relative"><div id="id_f1_LtLg" style="position:absolute;left:-80px;visibility:hidden;background-color:#000000;padding:2px;padding-left:3px;padding-right:3px;border:1px solid orange"><input type="text" name="f1_Lt_d" id="f1_Lt_d" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><input type="text" name="f1_Lt_m" id="f1_Lt_m" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><input type="text" name="f1_Lt_s" id="f1_Lt_s" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><select name="f1_Lt_dir" id="f1_Lt_dir" class="style2"><option value="N">N<option value="S">S</select>&nbsp;&nbsp;<input type="text" name="f1_Lg_d" id="f1_Lg_d" value="" size="1" class="f1FieldStyle" style="width:25px" maxlength="3" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><input type="text" name="f1_Lg_m" id="f1_Lg_m" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><input type="text" name="f1_Lg_s" id="f1_Lg_s" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><select name="f1_Lg_dir" id="f1_Lg_dir" class="style2"><option value="E">E<option value="W" selected>W</select>&nbsp;<input type="submit" class="inputBtn" name="" value="Apply" onclick="setLoc(1);hide_f1('id_f1_LtLg');return false;"></div></div><div id="TDL_loc_Txt" class="TDLdata"></div></td>
+			</tr>
+		</table>
+		</td>
+	</tr>
+</form>
+</table>
+
+<!-- // CALENDAR NAV // -->
+<div id="calmenu" style="visibility:hidden;display:none;">
+<table width="100%" wi!dth="527" cellpadding="0" cellspacing="0" border="0">
+<form name="printcontrol">
+	<tr>
+		<td valign="bottom" nowrap=1>
+		<table bg!color="#222222" height="15" cellpadding="0" cellspacing="0" border="0" style="border: 1px solid #383838;border-bottom:0px;">
+			<tr>
+				<td align="center" style="border-right:1px solid #383838" class="subNav" onmouseover="subNavOn(this)" onmouseout="subNavOff(this)" onclick="makeScreen('cal1_screen');return false;" nowrap=1>Calendar 1</td>
+				<td align="center" style="border-right:1px solid #383838" class="subNav" onmouseover="subNavOn(this)" onmouseout="subNavOff(this)" onclick="makeScreen('cal2_screen');return false;" nowrap=1>Calendar 2</td>
+				<td align="center" class="subNav" onmouseover="subNavOn(this)" onmouseout="subNavOff(this)" onclick="makeScreen('cal3_screen');return false;" nowrap=1>Calendar 3</td>
+			</tr>
+		</table>
+		</td>
+		<td width="100%" align="right" valign="top" style="padding-right:3px">
+		<div id="calPrintBtns" style="display:none">
+		<table cellpadding="0" cellspacing="0" border="0">
+			<tr>
+				<td>
+				<!--table cellpadding="0" cellspacing="0" border="0"><tr><td class="pseudoInputBtn1" onclick="printContentArea();return false;">Print</td></tr></table></td-->
+				</td>
+			</tr>
+		</table>
+		</div>
+		</td>
+	</tr>
+</form>
+</table>
+</div>
+<!-- // REM: -->
+<!-- // FOR PRINT BTN: onclick="setPr
+<td><input type="text" class="formintFlag();return false;" // -->
+<!-- <td>Width:</td>
+<td><input type="text" class="formfield2" name="pwidth" value="100%" size="2"></td>
+<td nowrap=1>&nbsp;Or Height:</td>field2" name="pheight" value="" size="2"></td> // -->
+
+
+<!-- // IFRAME // -->
+<table width="100%" height="370px" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td><iframe src="content.html" id="iframe_content" name="iframe_content" frameborder="0" style="width:100%; height:370px; border:1px solid #383838;"></iframe></td>
+	</tr>
+</table>
+
+<!-- // CALENDAR DAY INFO CONTAINER // -->
+<div id="calDayInfoContainer" style="visibility:hidden;display:none;">
+<table height="15" width="100%" bgcolor="#000000" st!yle="margin-top:10px" style="border:1px solid #383838;border-top:0px;" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td align="center" style="padding-right:15px">
+		<div id="calDayInfo" st!yle="visibility:hidden;display:none">&nbsp;</div>
+		</td>
+	</tr>
+</table>
+</div>
+<!-- // CALENDAR DAY INFO TEMPLATE // -->
+<div id="calDayInfoTemplate" style="display:none;">
+<table cellpadding="0" cellspacing="0" border="0" bgcolor="#000000">
+	<tr>
+		<td class="calDayInfoLabel"><span class="calDayInfoData">|date|</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px">Name: <span class="calDayInfoData">|name|</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px" nowrap="1">Percent of Full: <span class="calDayInfoData">|illum|</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px">Age: <span class="calDayInfoData">|age|%</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px">Rise: <span class="calDayInfoData">|rise|</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px">Set: <span class="calDayInfoData">|set|</span></td>
+		<!-- // <td class="calDayInfoLabel" style="padding-left:10px">Az: <span class="calDayInfoData">|az|</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px">Alt: <span class="calDayInfoData">|alt|</span></td> // -->
+	</tr>
+</table>
+</div>
+<div id="calQtrInfoTemplate" style="display:none;">
+<table cellpadding="0" cellspacing="0" border="0" bgcolor="#000000">
+	<tr>
+		<td class="calDayInfoLabel" style="padding-left:10px"><span class="calDayInfoDataB" style="text-transform:uppercase">|name|:</span></td>
+		<td class="calDayInfoLabel">&nbsp;&nbsp;<span class="calDayInfoDataB">|date|</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px" nowrap="1">Percent of Full: <span class="calDayInfoData">|illum|</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px">Age: <span class="calDayInfoData">|age|%</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px">Rise: <span class="calDayInfoData">|rise|</span></td>
+		<td class="calDayInfoLabel" style="padding-left:10px">Set: <span class="calDayInfoData">|set|</span></td>
+	</tr>
+</table>
+</div>
+
+
+<!-- // BOTTOM DATE/TIME FIELDS // -->
+
+<table width="100%" style="border:1px solid #383838;margin-top:5px;visibility: hidden;" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000">
+	<tr>
+		<td width="4" valign="bottom" st!yle="font-size:10px"><img name="toggleImg1" src="btn_toggle2.gif" border="0" style="cursor:hand" onclick="collapseToggle();return false;" /></td>
+
+		<td align="center" style="padding:5px;padding-right:60px;">
+
+<div id="bottomTDL" style="display:none">
+
+		<table cellpadding="0" cellspacing="0" border="0">
+			<tr>
+				<td align="right" style="padding-right:6px;border-right: 1px solid #383838;color:#666666;">
+				Temporary<br />
+				Settings<br />
+				<!-- // <span style="font-size:10px">(see Help tab)</span> // -->
+				</td>
+				<td align="center" style="padding-right:6px;padding-left:6px">
+
+<form action="#" method="get" name="bottomForm" style="margin:0px">
+		<table cellpadding="0" cellspacing="0" border="0">
+			<tr>
+				<td class="f2Label">Date:&nbsp;</td>
+				<td><input type="text" class="f2FieldStyle" name="f2_date" value="" size="10" maxlength="10" onfocus="f2Focus(this)" onblur="f2Focus(this)" onkeypress="return inputCheck('date')"></td>
+
+				<td class="f2Label">&nbsp;Time:&nbsp;</td>
+				<td><input type="text" class="f2FieldStyle" name="f2_time" value="" size="11" maxlength="11" onfocus="f2Focus(this)" onblur="f2Focus(this)" onkeypress="return inputCheck('time')"></td>
+
+				<td>&nbsp;<input type="button" class="inputBtn2" name="f2_now" value="Now" onclick="setNow();return false;"></td>
+
+				<td class="f2Label">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time Zone:&nbsp;</td>
+				<td><select class="f2FieldStyle" name="f2_tz" id="f2_tz" onfocus="f2Focus(this)" onblur="f2Focus(this)"></select></td>
+				<td class="f2Label" nowrap="1"></td>
+
+			</tr>
+		</table>
+		<table cellpadding="0" cellspacing="1" border="0" style="margin-top:5px">
+
+			<tr>
+				<td class="f2Label">Latitude:&nbsp;</td>
+				<td nowrap="1"><input type="text" name="f2_Lt_d" value="" size="1" class="f2FieldStyle" style="width:20px" maxlength="2" onfocus="f2Focus(this)" onblur="f2Focus(this)" onkeypress="return inputCheck('dig')">&nbsp;<input type="text" name="f2_Lt_m" value="" size="1" class="f2FieldStyle" style="width:20px" maxlength="2" onfocus="f2Focus(this)" onblur="f2Focus(this)" onkeypress="return inputCheck('dig')">&nbsp;<input type="text" name="f2_Lt_s" value="" size="1" class="f2FieldStyle" style="width:20px" maxlength="2" onfocus="f2Focus(this)" onblur="f2Focus(this)" onkeypress="return inputCheck('dig')">&nbsp;<select name="f2_Lt_dir" class="f2FieldStyle"><option value="N">N<option value="S">S</select></td>
+
+				<td class="f2Label" nowrap=1>&nbsp;&nbsp;&nbsp;Longitude:&nbsp;</td>
+				<td nowrap="1"><input type="text" name="f2_Lg_d" value="" size="2" class="f2FieldStyle" style="width:27px" maxlength="3" onfocus="f2Focus(this)" onblur="f2Focus(this)" onkeypress="return inputCheck('dig')">&nbsp;<input type="text" name="f2_Lg_m" value="" size="1" class="f2FieldStyle" style="width:20px" maxlength="2" onfocus="f2Focus(this)" onblur="f2Focus(this)" onkeypress="return inputCheck('dig')">&nbsp;<input type="text" name="f2_Lg_s" value="" size="1" class="f2FieldStyle" style="width:20px" maxlength="2" onfocus="f2Focus(this)" onblur="f2Focus(this)" onkeypress="return inputCheck('dig')">&nbsp;<select name="f2_Lg_dir" class="f2FieldStyle"><option value="E">E<option value="W" selected>W</select></td>
+
+			</tr>
+		</table>
+
+				</td>
+
+				<td style="padding-left:6px;border-left: 1px solid #383838">
+				<input type="submit" class="inputBtn" name="f2_apply" value="Apply" onclick="setDateTime(this.form.f2_date.value,this.form.f2_time.value,1);setLoc();return false;">
+				</td>
+			</tr>
+		</table>
+</form>
+<!-- // <a href="#" onclick="alert(debug_getSettingsStr());return false;">sess</a> | <a href="#" onclick="alert(debug_getProgramSettingsStr());return false;">prog</a> | <a href="#" onclick="toggleColor();return false;">colors</a> // -->
+		</div>
+		</td>
+	</tr>
+</table>
+
+<!-- max width -->
+<!-- Wednesday, September 29, 9999  12:59:00 PM  -7:00 (MST) 99� 99' 9" N 999� 99' 99" W -->
+<img src="spacer.gif" width="730" height="1" border="0" />
+
+		</td>
+	</tr>
+</table>
+<!-- end outside container table -->
+
+</body>
+</html>

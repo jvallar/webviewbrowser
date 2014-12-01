@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="322.0" prefWidth="399.0" style="-fx-background-color: #000000;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="webviewbrowser.controller.ActivationFXMLController">
+   <children>
+      <Pane prefHeight="160.0" prefWidth="399.0" style="-fx-background-color: #000000;">
+         <children>
+            <Label layoutX="14.0" layoutY="14.0" prefHeight="17.0" prefWidth="131.0" text="Activation Instruction:" textFill="#c5c5c5">
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+            </Label>
+            <Label layoutX="144.0" layoutY="14.0" prefHeight="17.0" prefWidth="254.0" text="Activation requires communication with the " textFill="#c5c5c5" />
+            <Label layoutX="14.0" layoutY="31.0" prefHeight="17.0" prefWidth="383.0" text="BlueMarmot.com server.  Please make sure your computer is connected " textFill="#c5c5c5" />
+            <Label layoutX="14.0" layoutY="48.0" prefHeight="17.0" prefWidth="383.0" text="to the Internet.  Activation protects BlueMarmot.com from illegal " textFill="#c5c5c5" />
+            <Label layoutX="14.0" layoutY="65.0" prefHeight="17.0" prefWidth="383.0" text="distribution of its software and helps ensure that your copy of the " textFill="#c5c5c5" />
+            <TextField fx:id="txtActivationCode" layoutX="14.0" layoutY="117.0" prefHeight="25.0" prefWidth="222.0">
+               <font>
+                  <Font name="System Bold" size="13.0" />
+               </font>
+            </TextField>
+            <Button fx:id="btnActivate" layoutX="242.0" layoutY="119.0" mnemonicParsing="false" onAction="#activate" text="Enter License Number" />
+            <Label layoutX="14.0" layoutY="82.0" prefHeight="17.0" prefWidth="383.0" text="software is genuine. If you need help, first try the Help button below. " textFill="#c5c5c5" />
+         </children>
+      </Pane>
+      <Pane layoutY="161.0" prefHeight="119.0" prefWidth="399.0" style="-fx-background-color: #000000;">
+         <children>
+            <Label layoutX="14.0" layoutY="14.0" text="Need a License Number?" textFill="#c5c5c5">
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+            </Label>
+            <Label layoutX="72.0" layoutY="31.0" prefHeight="17.0" prefWidth="322.0" text="to purchase. Your license will be sent to you by email." textFill="#c5c5c5" />
+            <Label layoutX="73.0" layoutY="84.0" prefHeight="17.0" prefWidth="332.0" text="first for answers to common problems, or " textFill="#c5c5c5" />
+            <Label layoutX="14.0" layoutY="65.0" text="Question?" textFill="#c5c5c5">
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+            </Label>
+            <Label layoutX="73.0" layoutY="101.0" prefHeight="17.0" prefWidth="322.0" text="to go to the online support center. " textFill="#c5c5c5" />
+            <Hyperlink fx:id="lnkLicenseNumber" layoutX="11.0" layoutY="28.0" onAction="#openActivationCodePage" text="Click Here" />
+            <Hyperlink layoutX="11.0" layoutY="81.0" onAction="#openAnswerPage" text="Click Here" />
+            <Hyperlink layoutX="11.0" layoutY="98.0" onAction="#openSupportPage" text="Click Here" />
+         </children>
+      </Pane>
+      <Button fx:id="btnCancel" layoutX="333.0" layoutY="282.0" mnemonicParsing="false" onAction="#close" text="Cancel" />
+      <Button layoutX="284.0" layoutY="282.0" mnemonicParsing="false" text="Help" />
+      <Button fx:id="btnLater" layoutX="231.0" layoutY="282.0" mnemonicParsing="false" onAction="#later" text="Try it!" />
+   </children>
+</AnchorPane>

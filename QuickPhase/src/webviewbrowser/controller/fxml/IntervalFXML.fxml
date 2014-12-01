@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="49.0" prefWidth="396.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="webviewbrowser.controller.IntervalFXMLController">
+   <children>
+      <TextField fx:id="txtNumber" layoutX="14.0" layoutY="14.0" promptText="Number of" />
+      <ComboBox fx:id="cmbUnit" layoutX="169.0" layoutY="14.0" prefWidth="150.0" promptText="unit" />
+      <Button fx:id="btnApply" layoutX="325.0" layoutY="14.0" mnemonicParsing="false" onAction="#apply" prefHeight="25.0" prefWidth="56.0" text="Apply" />
+   </children>
+</AnchorPane>

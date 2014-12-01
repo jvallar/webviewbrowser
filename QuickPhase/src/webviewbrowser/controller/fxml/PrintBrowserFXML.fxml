@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.web.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox maxHeight="1.7976931348623157E308" prefHeight="460.0" prefWidth="469.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="webviewbrowser.controller.PrintBrowserFXMLController">
+   <children>
+      <ToolBar maxWidth="1.7976931348623157E308" prefHeight="40.0" prefWidth="200.0">
+        <items>
+          <Button fx:id="btnPrint" mnemonicParsing="false" onAction="#printWebView" text="Print" />
+        </items>
+      </ToolBar>
+      <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" pannable="true" prefHeight="481.0" prefWidth="469.0" VBox.vgrow="ALWAYS">
+         <content>
+            <AnchorPane prefHeight="200.0" prefWidth="200.0">
+               <children>
+                  <WebView fx:id="webView" prefHeight="770.0" prefWidth="580.0" />
+               </children>
+            </AnchorPane>
+         </content>
+      </ScrollPane>
+   </children>
+</VBox>
