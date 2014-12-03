@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="207.0" prefWidth="308.0" style="-fx-background-color: black;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="webviewbrowser.controller.FindDataFXMLController">
+   <children>
+      <ComboBox fx:id="cmbPhaseName" layoutX="126.0" layoutY="14.0" prefHeight="25.0" prefWidth="162.0" promptText="Phase Name" />
+      <Button fx:id="txtCancel" layoutX="213.0" layoutY="162.0" mnemonicParsing="false" onAction="#cancel" prefHeight="25.0" prefWidth="75.0" text="Cancel" />
+      <Label layoutX="14.0" layoutY="18.0" text="Find:" textFill="#c5c5c5" />
+      <Button fx:id="btnApply1" layoutX="126.0" layoutY="162.0" mnemonicParsing="false" onAction="#apply" prefHeight="25.0" prefWidth="75.0" text="Find" />
+      <Label layoutX="14.0" layoutY="51.0" text="On this Date:" textFill="#c5c5c5" />
+      <ComboBox fx:id="cmbMonth" layoutX="126.0" layoutY="47.0" prefHeight="25.0" prefWidth="95.0" promptText="Month" />
+      <ComboBox fx:id="cmbDay" layoutX="225.0" layoutY="47.0" prefHeight="25.0" prefWidth="63.0" promptText="Day" />
+      <Label layoutX="14.0" layoutY="85.0" text="Starting From:" textFill="#c5c5c5" />
+      <DatePicker fx:id="date" layoutX="126.0" layoutY="81.0" prefHeight="25.0" prefWidth="162.0" />
+      <Label layoutX="14.0" layoutY="118.0" text="Number of Results:" textFill="#c5c5c5" />
+      <TextField fx:id="txtNumber" layoutX="126.0" layoutY="114.0" prefHeight="25.0" prefWidth="162.0" />
+   </children>
+</AnchorPane>

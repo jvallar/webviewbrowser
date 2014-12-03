@@ -66,8 +66,8 @@ public class BrowserFXMLController implements Initializable {
     webEngine.executeScript("newSetLoc()");
   }
 
-  public void setInterval(BigDecimal data) {
-    webEngine.executeScript("setInterval(" + data.toString() + ")");
+  public void setInterval(String data) {
+    webEngine.executeScript("setInterval('" + data+ "')");
   }
 
   public void setContent(String str, String type) {

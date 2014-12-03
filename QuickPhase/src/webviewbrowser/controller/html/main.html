@@ -971,6 +971,7 @@ function mainInit()
 	initSessionSetting('bM');
 	initSessionSetting('date');
 	initSessionSetting('time');
+	initSessionSetting('hayStack');
 
 	startRefresh();
 
@@ -1118,7 +1119,7 @@ function setDateTime(d_str,t_str,noRedraw)
 	setSessionSetting( 'jd', jd );
 
 	if(!noRedraw) {
-		tmpStopRefresh = false;
+		tmpStopRefresh = false; +
 		makeTDL();
 		loadTimeDateFields();
 		makeCurrentScreen();
@@ -1130,31 +1131,51 @@ function newHandleSetDateTime(d_str, t_str){
 }
 function exportTests(){ 
 	var str = cObj.document.getElementById('find_results').innerHTML;
-// top.sendMessage(str);
  top.exportCSV(str);
 }
 function generateTable(d_str, t_str){
- generateTableWithInterval(d_str, t_str, 1);
+ generateTableWithInterval(d_str, t_str, getSS("hayStack"));
 }
-function generateTableWithInterval(d_str, t_str, interval) {
+function showColumn(hayStack, needle){
+ if(hayStack == "All"){
+  return true;
+ }
+ if(hayStack.search(needle)==-1){
+  return false;
+ }
+ return true;
+}
+function generateTableWithInterval(d_str, t_str, hayStack) {
 
   var str ='<table width="100%">';
   str += '<tr>';
+  if(showColumn(hayStack,"Date"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Date</td>';
+  if(showColumn(hayStack,"Time"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Time</td>';
+  if(showColumn(hayStack,"Timezone"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Timezone</td>';
+  if(showColumn(hayStack,"Latitude"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Latitude</td>';
+  if(showColumn(hayStack,"Longitude"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Longitude</td>';
+  if(showColumn(hayStack,"Phase Name"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Phase Name</td>';
+  if(showColumn(hayStack,"Percent of Full"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Percent of Full</td>';
+  if(showColumn(hayStack,"Age"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Age</td>';
+  if(showColumn(hayStack,"Azimuth"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Azimuth</td>';
+  if(showColumn(hayStack,"Altitude"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Altitude</td>';
+  if(showColumn(hayStack,"Rise"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Rise</td>';
+  if(showColumn(hayStack,"Set"))
   str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-right:0px;">Set</td>';
   str += '</tr>';
   
-  for(i =0; i<30 ; i+=interval){
+  for(i =0; i<30 ; i++){
     var jd = getSS('jd');
     var d_a = new Array(), t_a = new Array();
     if (d_str) {
@@ -1233,17 +1254,30 @@ function generateTableWithInterval(d_str, t_str, interval) {
     var set = rs.set + set_azimuth;
   
     str += '<tr>';
+    
+  if(showColumn(hayStack,"Date"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + dateStr + '</td>';
+  if(showColumn(hayStack,"Time"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + timeStr + '</td>';
+  if(showColumn(hayStack,"Timezone"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + TZinfo(getSS('tz')) + '</td>';
+  if(showColumn(hayStack,"Latitude"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + getSS('Lt_d')+"&deg; "+getSS('Lt_m')+"' "+getSS('Lt_s')+'" '+getSS('Lt_dir') + '</td>';
+  if(showColumn(hayStack,"Longitude"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + getSS('Lg_d')+"&deg; "+getSS('Lg_m')+"' "+getSS('Lg_s')+'" '+getSS('Lg_dir') + '</td>';
+  if(showColumn(hayStack,"Phase Name"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + phase_name + '</td>';
+  if(showColumn(hayStack,"Percent of Full"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + percent_of_full + '%</td>';
+  if(showColumn(hayStack,"Age"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + age + '</td>';
+  if(showColumn(hayStack,"Azimuth"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + azimuth + '</td>';
+  if(showColumn(hayStack,"Altitude"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + altitude + '</td>';
+  if(showColumn(hayStack,"Rise"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + rise + '</td>';
+  if(showColumn(hayStack,"Set"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' + set + '</td>';
     str += '</tr>';
   } 

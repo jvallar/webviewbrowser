@@ -27,9 +27,10 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import webviewbrowser.controller.ActivationFXMLController;
 import webviewbrowser.controller.BrowserFXMLController;
+import webviewbrowser.controller.ColumnChooserFXMLController;
 import webviewbrowser.controller.DateFormatFXMLController;
 import webviewbrowser.controller.DateTimeFXMLController;
-import webviewbrowser.controller.IntervalFXMLController;
+import webviewbrowser.controller.FindDataFXMLController;
 import webviewbrowser.controller.LocationFXMLController;
 import static webviewbrowser.controller.LocationFXMLController.getLocation;
 import webviewbrowser.controller.PrintBrowserFXMLController;
@@ -60,7 +61,8 @@ public class Settings {
   List<JSONObject> list_datetime;
   private DateFormatFXMLController dateFormatFXMLController;
   private PrintBrowserFXMLController printBrowserFXMLController;
-  private IntervalFXMLController intervalFXMLController;
+  private ColumnChooserFXMLController columnChooserController;
+  private FindDataFXMLController findDataFXMLController;
 
   public Settings(BrowserFXMLController browser) {
     obj = new JSONObject();
@@ -440,19 +442,37 @@ public class Settings {
     GenerateCSV.generateCsvFile(Main.primaryStage, str);
   }
 
-  public void showIntervalDialog() {
+  public void showColumnChooserDialog() {
     try {
       FXMLLoader fxmlLoader = new FXMLLoader();
-      Parent myActivation = fxmlLoader.load(getClass().getResource("controller/fxml/IntervalFXML.fxml").openStream());
-      intervalFXMLController = (IntervalFXMLController) fxmlLoader.getController();
-      intervalFXMLController.setBrowserController(browser);
-      intervalFXMLController.setSettings(this);
+      Parent myActivation = fxmlLoader.load(getClass().getResource("controller/fxml/ColumnChooserFXML.fxml").openStream());
+      columnChooserController = (ColumnChooserFXMLController) fxmlLoader.getController();
+      columnChooserController.setBrowserController(browser);
+      columnChooserController.setSettings(this);
       Stage stage = new Stage();
       stage.initModality(Modality.APPLICATION_MODAL);
       stage.initOwner(Main.primaryStage);
       stage.setTitle("Interval");
-      stage.setScene(new Scene(myActivation, 400, 50));
-      stage.show();
+      stage.setScene(new Scene(myActivation, 215, 280));
+      stage.show();  
+    } catch (IOException ex) {
+    }
+  }  
+   
+  public void showFindData() {
+    System.err.println("testing");
+    try {
+      FXMLLoader fxmlLoader = new FXMLLoader();
+      Parent myActivation = fxmlLoader.load(getClass().getResource("controller/fxml/FindDataFXML.fxml").openStream());
+      findDataFXMLController = (FindDataFXMLController) fxmlLoader.getController();
+      findDataFXMLController.setBrowserController(browser);
+      findDataFXMLController.setSettings(this);
+      Stage stage = new Stage();
+      stage.initModality(Modality.APPLICATION_MODAL);
+      stage.initOwner(Main.primaryStage);
+      stage.setTitle("Find");
+      stage.setScene(new Scene(myActivation, 310, 210));
+      stage.show();  
     } catch (IOException ex) {
     }
   }
