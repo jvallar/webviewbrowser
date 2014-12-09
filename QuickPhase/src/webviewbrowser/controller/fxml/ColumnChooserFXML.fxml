@@ -1,34 +1,138 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="283.0" prefWidth="213.0" style="-fx-background-color: black;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="webviewbrowser.controller.ColumnChooserFXMLController">
+<AnchorPane prefHeight="500.0" prefWidth="400.0" style="-fx-background-color: black;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="webviewbrowser.controller.ColumnChooserFXMLController">
    <children>
-      <ScrollPane layoutX="16.0" layoutY="18.0" prefHeight="206.0" prefWidth="180.0">
+      <ScrollPane layoutX="217.0" layoutY="199.0" prefHeight="244.0" prefWidth="163.0">
          <content>
-            <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="205.0" prefWidth="174.0" style="-fx-background-color: black;">
+            <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="242.0" prefWidth="161.0" style="-fx-background-color: black;">
                <children>
-                  <CheckBox fx:id="chkDate" mnemonicParsing="false" text="Date" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkTime" mnemonicParsing="false" text="Time" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkTimezone" mnemonicParsing="false" text="Timezone" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkLatitude" mnemonicParsing="false" text="Latitude" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkLongitude" mnemonicParsing="false" text="Longitude" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkPhaseName" mnemonicParsing="false" text="Phase Name" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkPercentofFull" mnemonicParsing="false" text="Percent of Full" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkAge" mnemonicParsing="false" text="Age" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkAzimuth" mnemonicParsing="false" text="Azimuth" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkAltitude" mnemonicParsing="false" text="Altitude" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkRise" mnemonicParsing="false" text="Rise" textFill="#c5c5c5" />
-                  <CheckBox fx:id="chkSet" mnemonicParsing="false" text="Set" textFill="#c5c5c5" />
+                  <CheckBox fx:id="chkPhaseName" mnemonicParsing="false" text="Phase Name" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkPercentofFull" mnemonicParsing="false" text="Percent of Full" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkAgePercent" mnemonicParsing="false" text="Age (Percent)" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkAgeDays" mnemonicParsing="false" text="Age (Days)" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkAzimuth" mnemonicParsing="false" text="Azimuth" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkAltitude" mnemonicParsing="false" text="Altitude" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkRiseTime" mnemonicParsing="false" text="Rise Time" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkRiseLocation" mnemonicParsing="false" text="Rise Location" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkSetTime" mnemonicParsing="false" text="Set Time" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkSetLocation" mnemonicParsing="false" text="Set Location" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkMoonSign" mnemonicParsing="false" text="Moon Sign" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
                </children>
             </VBox>
          </content>
       </ScrollPane>
-      <Button layoutX="144.0" layoutY="240.0" mnemonicParsing="false" text="Cancel" />
-      <Button fx:id="btnApply" layoutX="83.0" layoutY="240.0" mnemonicParsing="false" onAction="#apply" prefHeight="25.0" prefWidth="52.0" text="Ok" />
+      <Button fx:id="btnCancel" layoutX="331.0" layoutY="455.0" mnemonicParsing="false" onAction="#cancel" text="Cancel" />
+      <Button fx:id="btnGenerate" layoutX="20.0" layoutY="455.0" mnemonicParsing="false" onAction="#apply" prefHeight="25.0" prefWidth="67.0" text="Generate" />
+      <Label layoutX="20.0" layoutY="14.0" text="Interval:" textFill="#c5c5c5" />
+      <RadioButton fx:id="rbtnDaily" layoutX="21.0" layoutY="39.0" mnemonicParsing="false" text="Daily" textFill="#c5c5c5" />
+      <RadioButton fx:id="rbtnHourly" layoutX="211.0" layoutY="39.0" mnemonicParsing="false" text="Hourly" textFill="#c5c5c5" />
+      <Label layoutX="20.0" layoutY="66.0" prefHeight="17.0" prefWidth="67.0" text="Time of Day" textFill="#c5c5c5" />
+      <ComboBox fx:id="cmbTimeOfDay" layoutX="88.0" layoutY="62.0" prefHeight="25.0" prefWidth="67.0" AnchorPane.leftAnchor="88.0" />
+      <Label layoutX="21.0" layoutY="97.0" prefHeight="17.0" prefWidth="89.0" text="Start Date:" textFill="#c5c5c5" />
+      <DatePicker fx:id="startDate" layoutX="20.0" layoutY="114.0" prefHeight="25.0" prefWidth="112.0" />
+      <Button fx:id="btnToday" layoutX="139.0" layoutY="114.0" mnemonicParsing="false" onAction="#getNow" prefHeight="25.0" prefWidth="57.0" text="Today" />
+      <Label layoutX="209.0" layoutY="97.0" prefHeight="17.0" prefWidth="123.0" text="Number of Results" textFill="#c5c5c5" />
+      <TextField fx:id="txtNumberDays" layoutX="209.0" layoutY="114.0" prefHeight="25.0" prefWidth="89.0" />
+      <Label layoutX="20.0" layoutY="161.0" prefHeight="17.0" prefWidth="103.0" text="Display Columns:" textFill="#c5c5c5" />
+      <Separator layoutX="21.0" layoutY="179.0" prefHeight="9.0" prefWidth="360.0" />
+      <ScrollPane layoutX="20.0" layoutY="199.0" prefHeight="244.0" prefWidth="191.0">
+         <content>
+            <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="242.0" prefWidth="189.0" style="-fx-background-color: black;">
+               <children>
+                  <HBox prefHeight="33.0" prefWidth="189.0">
+                     <children>
+                        <CheckBox fx:id="chkDate" mnemonicParsing="false" text="Date" textFill="#c5c5c5" />
+                        <Region prefHeight="25.0" prefWidth="12.0" />
+                        <ComboBox fx:id="cmbDateFormat" prefHeight="25.0" prefWidth="130.0" />
+                     </children>
+                     <padding>
+                        <Insets bottom="2.0" />
+                     </padding>
+                  </HBox>
+                  <HBox prefHeight="31.0" prefWidth="189.0">
+                     <children>
+                        <CheckBox fx:id="chkTime" mnemonicParsing="false" prefHeight="17.0" prefWidth="49.0" text="Time" textFill="#c5c5c5" />
+                        <Region prefHeight="25.0" prefWidth="9.0" />
+                        <ComboBox fx:id="cmbTimeFormat" prefHeight="25.0" prefWidth="130.0" />
+                     </children>
+                     <padding>
+                        <Insets bottom="2.0" />
+                     </padding>
+                  </HBox>
+                  <CheckBox fx:id="chkWeekday" mnemonicParsing="false" text="Weekday" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkGPS" mnemonicParsing="false" text="Latitude/Longitude" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkTimezone" mnemonicParsing="false" text="Timezone" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+                  <CheckBox fx:id="chkDaylight" mnemonicParsing="false" text="Daylight Saving Time" textFill="#c5c5c5">
+                     <padding>
+                        <Insets bottom="4.0" />
+                     </padding>
+                  </CheckBox>
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
    </children>
 </AnchorPane>

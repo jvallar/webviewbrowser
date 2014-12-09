@@ -66,10 +66,6 @@ public class BrowserFXMLController implements Initializable {
     webEngine.executeScript("newSetLoc()");
   }
 
-  public void setInterval(String data) {
-    webEngine.executeScript("setInterval('" + data+ "')");
-  }
-
   public void setContent(String str, String type) {
 
     String url = getClass().getResource(html2).toExternalForm();
@@ -265,6 +261,15 @@ public class BrowserFXMLController implements Initializable {
 
   public void setStage(Stage stage) {
     this.stage = stage;
+  }
+
+  
+  public void setInterval(String columns, String dateFormat, String timeFormat, String timOfDay, String date, String numberOfDays, String interval) {
+    webEngine.executeScript("setInterval('" + columns+ "','" + dateFormat+ "','" + timeFormat+ "','" + timOfDay+ "','" + date+ "','" + numberOfDays+ "','" + interval+ "')");
+  }
+
+  public void setFindData(String number, String month, String day, String name, String date) {
+    webEngine.executeScript("setFindData('" + number+ "','" + month+ "','" + day+ "','" + name+ "','" + date+ "')");
   }
 
 }

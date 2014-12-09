@@ -1145,44 +1145,41 @@ function showColumn(hayStack, needle){
  }
  return true;
 }
-function generateTableWithInterval(d_str, t_str, hayStack) {
+function generateTableWithInterval(d_str, t_str, hayStack, dateFormat, timeFormat, timOfDay, date, numberOfDays, interval) {
 
   var str ='<table width="100%">';
   str += '<tr>';
-  if(showColumn(hayStack,"Date"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Date</td>';
-  if(showColumn(hayStack,"Time"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Time</td>';
-  if(showColumn(hayStack,"Timezone"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Timezone</td>';
-  if(showColumn(hayStack,"Latitude"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Latitude</td>';
-  if(showColumn(hayStack,"Longitude"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Longitude</td>';
-  if(showColumn(hayStack,"Phase Name"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Phase Name</td>';
-  if(showColumn(hayStack,"Percent of Full"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Percent of Full</td>';
-  if(showColumn(hayStack,"Age"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Age</td>';
-  if(showColumn(hayStack,"Azimuth"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Azimuth</td>';
-  if(showColumn(hayStack,"Altitude"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Altitude</td>';
-  if(showColumn(hayStack,"Rise"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Rise</td>';
-  if(showColumn(hayStack,"Set"))
-  str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-right:0px;">Set</td>';
+  if(showColumn(hayStack,"Date"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Date</td>';
+  if(showColumn(hayStack,"Time"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Time</td>';
+  if(showColumn(hayStack,"Weekday"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Weekday</td>';
+  if(showColumn(hayStack,"Daylight Saving Time"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">DST</td>';
+  if(showColumn(hayStack,"Timezone"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Timezone</td>';
+  if(showColumn(hayStack,"Latitude"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Latitude</td>';
+  if(showColumn(hayStack,"Longitude"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Longitude</td>';
+  if(showColumn(hayStack,"Phase Name"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Phase Name</td>';
+  if(showColumn(hayStack,"Percent of Full"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Percent of Full</td>';
+  if(showColumn(hayStack,"Age (Percent)"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Age (Percent)</td>';
+  if(showColumn(hayStack,"Age (Days)"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Age (Days)</td>';
+  if(showColumn(hayStack,"Azimuth"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Azimuth</td>';
+  if(showColumn(hayStack,"Altitude"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Altitude</td>';
+  if(showColumn(hayStack,"Rise Time"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Rise Time</td>';
+  if(showColumn(hayStack,"Rise Location"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Rise Location</td>';
+  if(showColumn(hayStack,"Set Time"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Set Time</td>';
+  if(showColumn(hayStack,"Set Location"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Set Location</td>';
+  if(showColumn(hayStack,"Moon Sign"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-right:0px;">Moon Sign</td>';
   str += '</tr>';
-  
-  for(i =0; i<30 ; i++){
+  if(interval=="hourly"){
+   interval = 1/24;
+  }else{
+   interval = 1;
+  }
+  for(i =0; i<numberOfDays ; i+=interval){
     var jd = getSS('jd');
     var d_a = new Array(), t_a = new Array();
-    if (d_str) {
-      d_a = strDt2(d_str, getSS('dt_format'), jd);
-    }
+    d_a = strDt2(date, dateFormat, jd);
+
     if (t_str) {
-      t_a = strT(t_str, getSS('clock'));
+      t_a = strT(t_str, timeFormat);
     }
     if (!d_a || !t_a) {
       return false;
@@ -1193,15 +1190,15 @@ function generateTableWithInterval(d_str, t_str, hayStack) {
     }
 
     var h = t24h(t_a['h'], t_a['ampm']);
-    var jd = update_JD(jd, d_a['Y'], d_a['M'], d_a['D'], h, t_a['m'], t_a['s'])+i;
+    var jd = update_JD(jd, d_a['Y'], d_a['M'], d_a['D'], timOfDay, t_a['m'], t_a['s'])+i;
     var rise_azimuth = "", set_azimuth = "";
     var jdate = JD_to_date(jd);
     var dy = jdate['D'];
     var tz = getSS('tz');
 
     var TZ_dst = DST_adj2(getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst'));
-    var dt_format = getSS('dt_format');
-    var clock = getSS('clock');
+    var dt_format = dateFormat;
+    var clock = timeFormat;
     var Lg = dms_to_d(getSS('Lg_d'), getSS('Lg_m'), getSS('Lg_s'), getSS('Lg_dir'));
     var Lt = dms_to_d(getSS('Lt_d'), getSS('Lt_m'), getSS('Lt_s'), getSS('Lt_dir'));
     
@@ -1218,7 +1215,7 @@ function generateTableWithInterval(d_str, t_str, hayStack) {
      &&
      is_number(getPS('tz'))
      ) {
-      rs = getRiseSet(jd, TZ_dst, Lg, Lt, getSS('clock')); // rem: dt is used to get mjd (just passes in generic y m d h)
+      rs = getRiseSet(jd, TZ_dst, Lg, Lt, timeFormat); // rem: dt is used to get mjd (just passes in generic y m d h)
       // rise pos
       if (rs.rise_dec) {
         var tmpDt = x_to_xms(rs.rise_dec);
@@ -1254,10 +1251,15 @@ function generateTableWithInterval(d_str, t_str, hayStack) {
     var set = rs.set + set_azimuth;
   
     str += '<tr>';
-    
+    var split_rise = rise.split(" at ");
+    var split_set = set.split(" at ");
   if(showColumn(hayStack,"Date"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + dateStr + '</td>';
   if(showColumn(hayStack,"Time"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + timeStr + '</td>';
+  if(showColumn(hayStack,"Weekday"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + aDW[jdate['wd']] + '</td>';
+  if(showColumn(hayStack,"Daylight Saving Time"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + timeStr + '</td>';
   if(showColumn(hayStack,"Timezone"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + TZinfo(getSS('tz')) + '</td>';
@@ -1269,16 +1271,22 @@ function generateTableWithInterval(d_str, t_str, hayStack) {
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + phase_name + '</td>';
   if(showColumn(hayStack,"Percent of Full"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + percent_of_full + '%</td>';
-  if(showColumn(hayStack,"Age"))
+  if(showColumn(hayStack,"Age (Percent)"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + age + '</td>';
   if(showColumn(hayStack,"Azimuth"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + azimuth + '</td>';
   if(showColumn(hayStack,"Altitude"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + altitude + '</td>';
-  if(showColumn(hayStack,"Rise"))
-    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + rise + '</td>';
-  if(showColumn(hayStack,"Set"))
-    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' + set + '</td>';
+  if(showColumn(hayStack,"Rise Time"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_rise[0] +" "+split_rise[1]+ '</td>';
+  if(showColumn(hayStack,"Rise Location"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_rise[2] +" "+split_rise[3] + '</td>';
+  if(showColumn(hayStack,"Set Time"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_set[0] +" "+split_set[1] + '</td>';
+  if(showColumn(hayStack,"Set Location"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' + split_set[2] +" "+split_set[3] + '</td>';
+  if(showColumn(hayStack,"Moon Sign"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' +  + '</td>';
     str += '</tr>';
   } 
 
@@ -1925,6 +1933,40 @@ function makeFindScreen()
 //	if(f.start.value=='') {
 ////		cObj.setFindStart('target');
 //	}
+}
+function generateTable(max, month, day, phase, start){
+ 
+	var obj = cObj.document.getElementById('find_results');//	var f = cObj.document.forms['findform'];
+	if(month && !day) {
+		alert( "If you select a month, you must also select a day." );
+		f.day.focus();
+		return false;
+	}
+	if(day && !month) {
+		alert( "If you select a day, you must also select a month." );
+		f.month.focus();
+		return false;
+	}
+	if(!start) {
+		alert( "You must enter a \"Starting From\" date." );
+		f.start.focus();
+		return false;
+	}
+	if(!max || max<=0) {
+		alert( "You must enter \"Number of Results\" (greater than zero)." );
+		f.max.focus();
+		return false;
+	}
+
+	var a = strDt2(start,getSS('dt_format'),getSS('jd'));
+	if(!a) {
+		f.start.focus();
+		return false;
+	}
+	start = date_to_JD(a['Y'],a['M'],a['D']);
+	var str = listQuartersNew(phase, month-0+1, day-0, start, max );
+
+	obj.innerHTML = str;
 }
 function generateFindScreenOutput() {
 
@@ -3548,6 +3590,167 @@ function decYear( Y, M, D, h, m, s )
 	var dec = (jd-jd0)/(jd1-jd0);
 	return Y+dec;
 }
+function listQuartersNew( qn, month, day, jd_start, max )
+{
+	var results = new Array();
+
+	if(month && day) {
+		var jdate = JD_to_date(jd_start);
+		var year = jdate['Y'];
+		var jd = update_JD(jd_start,'',month,day);
+		var a;
+		var count=0, abort=0, temp=0;
+		while( count<max && abort<999 ) {
+			a = Quarters( jd, 5, qn );
+			for(var i=0; i<a.length; i++) {
+				if( dtStr2(a[i].jd,'dd/mm/yyyy') == dtStr2(jd,'dd/mm/yyyy') ) {
+					//alert(a[i].jd);
+					results[count] = a[i];
+					count ++;
+				}
+			}
+			year++;
+			//dt.setFullYear(year);
+			jd = update_JD(jd,year);
+			abort ++;
+		}
+
+	} else {
+		var a = Quarters( jd_start, max-0+4, qn );
+		var count=0;
+		for(var i=0; i<a.length; i++) {
+			if( a[i].jd>jd_start && count<max ) {
+				results[count] = a[i];
+				count ++;
+			}
+		}
+	}
+	count = 0;
+	
+  var str ='<table width="100%">';
+  str += '<tr>';  
+  var hayStack = getPS("hayStack");
+  if(showColumn(hayStack,"Date"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Date</td>';
+  if(showColumn(hayStack,"Time"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Time</td>';
+  if(showColumn(hayStack,"Weekday"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Weekday</td>';
+  if(showColumn(hayStack,"Daylight Saving Time"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">DST</td>';
+  if(showColumn(hayStack,"Timezone"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Timezone</td>';
+  if(showColumn(hayStack,"Latitude"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Latitude</td>';
+  if(showColumn(hayStack,"Longitude"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Longitude</td>';
+  if(showColumn(hayStack,"Phase Name"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Phase Name</td>';
+  if(showColumn(hayStack,"Percent of Full"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Percent of Full</td>';
+  if(showColumn(hayStack,"Age (Percent)"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Age (Percent)</td>';
+  if(showColumn(hayStack,"Age (Days)"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Age (Days)</td>';
+  if(showColumn(hayStack,"Azimuth"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Azimuth</td>';
+  if(showColumn(hayStack,"Altitude"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Altitude</td>';
+  if(showColumn(hayStack,"Rise Time"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Rise Time</td>';
+  if(showColumn(hayStack,"Rise Location"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Rise Location</td>';
+  if(showColumn(hayStack,"Set Time"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Set Time</td>';
+  if(showColumn(hayStack,"Set Location"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;">Set Location</td>';
+  if(showColumn(hayStack,"Moon Sign"))  str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-right:0px;">Moon Sign</td>';
+  str += '</tr>';
+	var jdate;
+	for(var i=0; i<results.length; i++) {
+		count ++;
+  var rise_azimuth = "", set_azimuth = "";
+  var jd = results[i].jd;
+		jdate = JD_to_date(jd);
+      var TZ_dst = DST_adj2(getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst'));
+    var dt_format = getSS('dt_format');
+    var clock = getSS('clock');
+    var Lg = dms_to_d(getSS('Lg_d'), getSS('Lg_m'), getSS('Lg_s'), getSS('Lg_dir'));
+    var Lt = dms_to_d(getSS('Lt_d'), getSS('Lt_m'), getSS('Lt_s'), getSS('Lt_dir'));
+    
+    var e = Ephemeris(jd,TZ_dst);
+    var moon = getPhase(jd, TZ_dst); var rs = {rise: LocMsgAlert, set: LocMsgAlert};
+    var H = new Object();
+    var azimuth = LocMsgAlert, altitude = LocMsgAlert, az_dec = "", alt_dec = "";
+    if (
+     LtCheck(getSS('Lt_d'), getSS('Lt_m'), getSS('Lt_s'))
+     &&
+     LgCheck(getSS('Lg_d'), getSS('Lg_m'), getSS('Lg_s'))
+     &&
+     is_number(getPS('tz'))
+     ) {
+      rs = getRiseSet(jd, TZ_dst, Lg, Lt, clock); // rem: dt is used to get mjd (just passes in generic y m d h)
+      // rise pos
+      if (rs.rise_dec) {
+        var tmpDt = x_to_xms(rs.rise_dec);
+        var tmpJD = date_to_JD(jdate['Y'], jdate['M'], jdate['D'], tmpDt['x'], tmpDt['m'], tmpDt['s']);
+        var tmp_e = Ephemeris(tmpJD, TZ_dst);
+        var rise_H = Horizon(tmp_e.MoonRa, tmp_e.MoonDec, tmpJD, TZ_dst, Lg, Lt);
+        rise_azimuth = " at " + rnd(rise_H.az, 0) + "&deg";
+      }
+      if (rs.set_dec) {
+        var tmpDt = x_to_xms(rs.set_dec);
+        var tmpJD = date_to_JD(jdate['Y'], jdate['M'], jdate['D'], tmpDt['x'], tmpDt['m'], tmpDt['s']);
+        var tmp_e = Ephemeris(tmpJD, TZ_dst);
+        var set_H = Horizon(tmp_e.MoonRa, tmp_e.MoonDec, tmpJD, TZ_dst, Lg, Lt);
+        set_azimuth = " at " + rnd(set_H.az, 0) + "&deg;";
+      }
+      H = Horizon(e.MoonRa, e.MoonDec, jd, TZ_dst, Lg, Lt);
+      azimuth = dStr(H.az);
+      az_dec = rnd(H.az, 4);
+      altitude = dStr(H.alt);
+      alt_dec = rnd(H.alt, 4);
+    }
+    
+    var qArray = Quarters(jd);
+    var prevNM = fetchPrevNM(qArray,jd);
+    var age = getAge(prevNM.jd,jd);
+    var s_h = (getSS('s_hemisphere')=="yes")?"_s":"";
+    var dateStr = dtStr2(jd, dt_format);
+    var timeStr = tStr2(jd, clock);
+    var phase_name = aPN[phN(moon.D)];
+    var percent_of_full = rnd(moon.phase, 0);
+    var age = rnd(moon.age, 0) + '% (' + age.d + ' days ' + age.h + ' hrs ' + pad2(age.m) + ' mins)';
+    var rise = rs.rise + rise_azimuth;
+    var set = rs.set + set_azimuth;
+    var split_rise = rise.split(" at ");
+    var split_set = set.split(" at ");
+    if(showColumn(hayStack,"Date"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + dateStr + '</td>';
+  if(showColumn(hayStack,"Time"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + timeStr + '</td>';
+  if(showColumn(hayStack,"Weekday"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + aDW[jdate['wd']] + '</td>';
+  if(showColumn(hayStack,"Daylight Saving Time"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + timeStr + '</td>';
+  if(showColumn(hayStack,"Timezone"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + TZinfo(getSS('tz')) + '</td>';
+  if(showColumn(hayStack,"Latitude"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + getSS('Lt_d')+"&deg; "+getSS('Lt_m')+"' "+getSS('Lt_s')+'" '+getSS('Lt_dir') + '</td>';
+  if(showColumn(hayStack,"Longitude"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + getSS('Lg_d')+"&deg; "+getSS('Lg_m')+"' "+getSS('Lg_s')+'" '+getSS('Lg_dir') + '</td>';
+  if(showColumn(hayStack,"Phase Name"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + phase_name + '</td>';
+  if(showColumn(hayStack,"Percent of Full"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + percent_of_full + '%</td>';
+  if(showColumn(hayStack,"Age (Percent)"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + age + '</td>';
+  if(showColumn(hayStack,"Azimuth"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + azimuth + '</td>';
+  if(showColumn(hayStack,"Altitude"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + altitude + '</td>';
+  if(showColumn(hayStack,"Rise Time"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_rise[0] +'</td>';
+  if(showColumn(hayStack,"Rise Location"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_rise[1] + '</td>';
+  if(showColumn(hayStack,"Set Time"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_set[0] + '</td>';
+  if(showColumn(hayStack,"Set Location"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' + split_set[1] + '</td>';
+  if(showColumn(hayStack,"Moon Sign"))
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' +  + '</td>';
+    str += '</tr>';
+		//str += "("+count+") "+aM[results[i].dt.getMonth()]+" "+results[i].dt.getDate()+", "+results[i].dt.getFullYear()+" "+tStr(results[i].dt,getSS('clock'));
+		//str += " ["+results[i].q+"]["+results[i].k2+"]";
+		//str += "<br />";
+	}
+	str += '</table>';
+	return str;
+}
+
 function listQuarters( qn, month, day, jd_start, max )
 {
 	var results = new Array();

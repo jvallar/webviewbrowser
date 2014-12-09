@@ -453,7 +453,7 @@ public class Settings {
       stage.initModality(Modality.APPLICATION_MODAL);
       stage.initOwner(Main.primaryStage);
       stage.setTitle("Interval");
-      stage.setScene(new Scene(myActivation, 215, 280));
+      stage.setScene(new Scene(myActivation, 400, 500));
       stage.show();  
     } catch (IOException ex) {
     }
