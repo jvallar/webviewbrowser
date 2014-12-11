@@ -22,24 +22,35 @@ import javafx.stage.StageStyle;
  *
  * @author Jameson
  */
-public class InformationDialog extends Stage {
-  
-  public InformationDialog(final Stage stg, final String text) {
+public class ConfirmationDialog extends Stage {
 
+  private Runnable callback;
+
+  public ConfirmationDialog(final Stage stg, final String text, Runnable callback) {
+    this.callback = callback;
     setResizable(false);
     initModality(Modality.APPLICATION_MODAL);
 //        initStyle(StageStyle.TRANSPARENT);
 
     FlowPane buttons = new FlowPane(10, 10);
     buttons.setAlignment(Pos.CENTER);
-    Button OK = new Button("Ok");
-    OK.setOnAction(new EventHandler() {
+    Button btnOk = new Button("Yes");
+    btnOk.setOnAction(new EventHandler() {
       @Override
       public void handle(Event event) {
-        InformationDialog.this.close();
+        callback.run();
+        ConfirmationDialog.this.hide();//.close();
       }
     });
-    buttons.getChildren().addAll(OK);
+    Button btnCancel = new Button("Cancel");
+    btnCancel.setOnAction(new EventHandler() {
+      @Override
+      public void handle(Event event) {
+        ConfirmationDialog.this.hide();//.close();
+      }
+    });
+    buttons.getChildren().addAll(btnOk);
+    buttons.getChildren().addAll(btnCancel);
     VBox box = new VBox();
     box.setAlignment(Pos.CENTER);
     box.setSpacing(10);
@@ -48,5 +59,4 @@ public class InformationDialog extends Stage {
     setScene(s);
     show();
   }
-
 }

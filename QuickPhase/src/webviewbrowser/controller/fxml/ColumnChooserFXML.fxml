@@ -134,5 +134,6 @@
             </VBox>
          </content>
       </ScrollPane>
+      <Label layoutX="304.0" layoutY="118.0" text="Max: 4000" textFill="RED" />
    </children>
 </AnchorPane>

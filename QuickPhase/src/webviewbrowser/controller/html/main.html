@@ -1278,13 +1278,13 @@ function generateTableWithInterval(d_str, t_str, hayStack, dateFormat, timeForma
   if(showColumn(hayStack,"Altitude"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + altitude + '</td>';
   if(showColumn(hayStack,"Rise Time"))
-    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_rise[0] +" "+split_rise[1]+ '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_rise[0] +'</td>';
   if(showColumn(hayStack,"Rise Location"))
-    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_rise[2] +" "+split_rise[3] + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_rise[1] + '</td>';
   if(showColumn(hayStack,"Set Time"))
-    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_set[0] +" "+split_set[1] + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_set[0] + '</td>';
   if(showColumn(hayStack,"Set Location"))
-    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' + split_set[2] +" "+split_set[3] + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_set[1] + '</td>';
   if(showColumn(hayStack,"Moon Sign"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' +  + '</td>';
     str += '</tr>';
@@ -3739,7 +3739,7 @@ function listQuartersNew( qn, month, day, jd_start, max )
   if(showColumn(hayStack,"Set Time"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_set[0] + '</td>';
   if(showColumn(hayStack,"Set Location"))
-    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' + split_set[1] + '</td>';
+    str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;">' + split_set[1] + '</td>';
   if(showColumn(hayStack,"Moon Sign"))
     str += '<td style="border:1px solid #5A5A5B;border-left:0px;border-top:0px;border-right:0px;">' +  + '</td>';
     str += '</tr>';

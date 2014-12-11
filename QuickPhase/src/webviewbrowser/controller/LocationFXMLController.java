@@ -5,13 +5,12 @@
  */
 package webviewbrowser.controller;
 
+import java.math.BigDecimal;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -24,6 +23,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import webviewbrowser.ConfirmationDialog;
 import webviewbrowser.InformationDialog;
 import webviewbrowser.Settings;
 import webviewbrowser.common.Option;
@@ -98,66 +98,154 @@ public class LocationFXMLController implements Initializable {
 
   @FXML
   private void save(ActionEvent event) {
+    boolean success = false;
     if (edit) {
-      update();
+      success = update();
       edit = false;
     } else {
-      add();
+      success = add();
     }
-
-    InformationDialog information = new InformationDialog(stage, "Succesfully saved");
-    information.show();
+    if (success) {
+      InformationDialog information = new InformationDialog(stage, "Succesfully saved");
+      information.show();
+    }
   }
 
-  private void update() {
-    settings.setDefaultLocation(chkDefaultLocation.isSelected() ? txtLocation.getText() : settings.getDefaultLocation());
-    settings.setProgramSettings("tz", cmbTimeZone.getValue().getData());
-    settings.setProgramSettings("apply_dst", chkApplyDayLightSaving.isSelected() ? "yes" : "no");
-    settings.setProgramSettings("Lt_d", txtLatitudeD.getText());
-    settings.setProgramSettings("Lt_m", txtLatitudeM.getText());
-    settings.setProgramSettings("Lt_s", txtLatitudeS.getText());
-    settings.setProgramSettings("Lt_dir", cmbLatitudeDir.getValue().getData());
-    settings.setProgramSettings("Lg_d", txtLongitudeD.getText());
-    settings.setProgramSettings("Lg_m", txtLongitudeM.getText());
-    settings.setProgramSettings("Lg_s", txtLongitudeS.getText());
-    settings.setProgramSettings("Lg_dir", cmbLongitudeDir.getValue().getData());
-    settings.setProgramSettings("location", txtLocation.getText());
-    settings.storeProgramSettings();
-    settings.loadProgramSettings();
-    initializeListView();
-    clear();
-  }
-
-  private void add() {
-    String location = txtLocation.getText();
-    final String tz = cmbTimeZone.getValue().getData();
+  private boolean update() {
+    if (validateValues()) {
+      return false;
+    }
     final String apply_dst = chkApplyDayLightSaving.isSelected() ? "yes" : "no";
+    final String location = txtLocation.getText();
+    final String tz = cmbTimeZone.getValue().getData();
+    String Lt_dir = cmbLatitudeDir.getValue() == null ? "" : cmbLatitudeDir.getValue().getData();
+    String Lg_dir = cmbLongitudeDir.getValue() == null ? "" : cmbLongitudeDir.getValue().getData();
     final String Lt_d = txtLatitudeD.getText();
     final String Lt_m = txtLatitudeM.getText();
     final String Lt_s = txtLatitudeS.getText();
-    final String Lt_dir = cmbLatitudeDir.getValue().getData();
     final String Lg_d = txtLongitudeD.getText();
     final String Lg_m = txtLongitudeM.getText();
     final String Lg_s = txtLongitudeS.getText();
-    final String Lg_dir = cmbLongitudeDir.getValue().getData();
+
+    BigDecimal latitude_decimal = new BigDecimal(Lt_d);
+    BigDecimal latitude_int = new BigDecimal(latitude_decimal.intValue());
+
+    BigDecimal latitude_minute_decimal = latitude_decimal.subtract(latitude_int);
+    BigDecimal latitude_minute_int_1 = latitude_minute_decimal.multiply(new BigDecimal(60));
+    BigDecimal latitude_minute_int_2 = new BigDecimal(latitude_minute_int_1.intValue());
+
+    BigDecimal latitude_second_decimal = latitude_minute_int_1.subtract(latitude_minute_int_2);
+    BigDecimal latitude_second_int_1 = latitude_second_decimal.multiply(new BigDecimal(60));
+    BigDecimal latitude_second_int_2 = new BigDecimal(latitude_second_int_1.intValue());
+
+    BigDecimal longitude_decimal = new BigDecimal(Lg_d);
+    BigDecimal longitude_int = new BigDecimal(longitude_decimal.intValue());
+
+    BigDecimal longitude_minute_decimal = longitude_decimal.subtract(longitude_int);
+    BigDecimal longitude_minute_int_1 = longitude_minute_decimal.multiply(new BigDecimal(60));
+    BigDecimal longitude_minute_int_2 = new BigDecimal(longitude_minute_int_1.intValue());
+
+    BigDecimal longitude_second_decimal = longitude_minute_int_1.subtract(longitude_minute_int_2);
+    BigDecimal longitude_second_int_1 = longitude_second_decimal.multiply(new BigDecimal(60));
+    BigDecimal longitude_second_int_2 = new BigDecimal(longitude_second_int_1.intValue());
+
+    Lt_dir = Lt_dir.isEmpty() ? latitude_decimal.compareTo(BigDecimal.ZERO) > 0 ? "N" : "S" : Lt_dir;
+    Lg_dir = Lg_dir.isEmpty() ? longitude_decimal.compareTo(BigDecimal.ZERO) > 0 ? "W" : "E" : Lg_dir;
 
     settings.setDefaultLocation(chkDefaultLocation.isSelected() ? txtLocation.getText() : settings.getDefaultLocation());
-    settings.setCurrentLocation(txtLocation.getText());
     settings.setProgramSettings("location", txtLocation.getText());
     settings.setProgramSettings("tz", tz);
     settings.setProgramSettings("apply_dst", apply_dst);
-    settings.setProgramSettings("Lt_d", Lt_d);
-    settings.setProgramSettings("Lt_m", Lt_m);
-    settings.setProgramSettings("Lt_s", Lt_s);
+    settings.setProgramSettings("Lt_d", latitude_int.toString());
+    settings.setProgramSettings("Lt_m", Lt_m.isEmpty() || Lt_d.contains(".") ? latitude_minute_int_2.toString() : Lt_m);
+    settings.setProgramSettings("Lt_s", Lt_s.isEmpty() || Lt_d.contains(".") ? latitude_second_int_2.toString() : Lt_s);
     settings.setProgramSettings("Lt_dir", Lt_dir);
-    settings.setProgramSettings("Lg_d", Lg_d);
-    settings.setProgramSettings("Lg_m", Lg_m);
-    settings.setProgramSettings("Lg_s", Lg_s);
+    settings.setProgramSettings("Lg_d", longitude_int.toString());
+    settings.setProgramSettings("Lg_m", Lg_m.isEmpty() || Lg_d.contains(".") ? longitude_minute_int_2.toString() : Lg_m);
+    settings.setProgramSettings("Lg_s", Lg_s.isEmpty() || Lg_d.contains(".") ? longitude_second_int_2.toString() : Lg_s);
     settings.setProgramSettings("Lg_dir", Lg_dir);
     settings.storeProgramSettings();
     settings.loadProgramSettings();
     initializeListView();
     clear();
+    return true;
+  }
+
+  private boolean add() {
+    if (validateValues()) {
+      return false;
+    }
+
+    final String apply_dst = chkApplyDayLightSaving.isSelected() ? "yes" : "no";
+    final String location = txtLocation.getText();
+    final String tz = cmbTimeZone.getValue().getData();
+    String Lt_dir = cmbLatitudeDir.getValue() == null ? "" : cmbLatitudeDir.getValue().getData();
+    String Lg_dir = cmbLongitudeDir.getValue() == null ? "" : cmbLongitudeDir.getValue().getData();
+    final String Lt_d = txtLatitudeD.getText();
+    final String Lt_m = txtLatitudeM.getText();
+    final String Lt_s = txtLatitudeS.getText();
+    final String Lg_d = txtLongitudeD.getText();
+    final String Lg_m = txtLongitudeM.getText();
+    final String Lg_s = txtLongitudeS.getText();
+
+    BigDecimal latitude_decimal = new BigDecimal(Lt_d);
+    BigDecimal latitude_int = new BigDecimal(latitude_decimal.abs().intValue());
+
+    BigDecimal latitude_minute_decimal = latitude_decimal.abs().subtract(latitude_int);
+    BigDecimal latitude_minute_int_1 = latitude_minute_decimal.multiply(new BigDecimal(60));
+    BigDecimal latitude_minute_int_2 = new BigDecimal(latitude_minute_int_1.intValue());
+
+    BigDecimal latitude_second_decimal = latitude_minute_int_1.subtract(latitude_minute_int_2);
+    BigDecimal latitude_second_int_1 = latitude_second_decimal.multiply(new BigDecimal(60));
+    BigDecimal latitude_second_int_2 = new BigDecimal(latitude_second_int_1.intValue());
+
+    BigDecimal longitude_decimal = new BigDecimal(Lg_d);
+    BigDecimal longitude_int = new BigDecimal(longitude_decimal.abs().intValue());
+
+    BigDecimal longitude_minute_decimal = longitude_decimal.abs().subtract(longitude_int);
+    BigDecimal longitude_minute_int_1 = longitude_minute_decimal.multiply(new BigDecimal(60));
+    BigDecimal longitude_minute_int_2 = new BigDecimal(longitude_minute_int_1.intValue());
+
+    BigDecimal longitude_second_decimal = longitude_minute_int_1.subtract(longitude_minute_int_2);
+    BigDecimal longitude_second_int_1 = longitude_second_decimal.multiply(new BigDecimal(60));
+    BigDecimal longitude_second_int_2 = new BigDecimal(longitude_second_int_1.intValue());
+
+    Lt_dir = Lt_dir.isEmpty() ? latitude_decimal.compareTo(BigDecimal.ZERO) > 0 ? "N" : "S" : Lt_dir;
+    Lg_dir = Lg_dir.isEmpty() ? longitude_decimal.compareTo(BigDecimal.ZERO) > 0 ? "W" : "E" : Lg_dir;
+    settings.setDefaultLocation(chkDefaultLocation.isSelected() ? txtLocation.getText() : settings.getDefaultLocation());
+    settings.setCurrentLocation(txtLocation.getText());
+    settings.setProgramSettings("location", txtLocation.getText());
+    settings.setProgramSettings("tz", tz);
+    settings.setProgramSettings("apply_dst", apply_dst);
+    settings.setProgramSettings("Lt_d", latitude_int.toString());
+    settings.setProgramSettings("Lt_m", Lt_m.isEmpty() || Lt_d.contains(".") ? latitude_minute_int_2.toString() : Lt_m);
+    settings.setProgramSettings("Lt_s", Lt_s.isEmpty() || Lt_d.contains(".") ? latitude_second_int_2.toString() : Lt_s);
+    settings.setProgramSettings("Lt_dir", Lt_dir);
+    settings.setProgramSettings("Lg_d", longitude_int.toString());
+    settings.setProgramSettings("Lg_m", Lg_m.isEmpty() || Lg_d.contains(".") ? longitude_minute_int_2.toString() : Lg_m);
+    settings.setProgramSettings("Lg_s", Lg_s.isEmpty() || Lg_d.contains(".") ? longitude_second_int_2.toString() : Lg_s);
+    settings.setProgramSettings("Lg_dir", Lg_dir);
+    settings.storeProgramSettings();
+    settings.loadProgramSettings();
+    initializeListView();
+    clear();
+    return true;
+  }
+
+  private boolean validateValues() {
+    if (cmbTimeZone.getValue() == null) {
+      new InformationDialog(stage, "Please select timezone");
+      return true;
+    }
+    if (!txtLatitudeD.getText().matches("^[-+]?([1-8]?\\d(\\.\\d+)?|90(\\.0+)?)$")) {
+      new InformationDialog(stage, "Invalid latitude values");
+      return true;
+    }
+    if (!txtLongitudeD.getText().matches("^[-+]?(180(\\.0+)?|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+)?)$")) {
+      new InformationDialog(stage, "Invalid longitude values");
+      return true;
+    }
+    return false;
   }
 
   public static String getLocation(JSONObject jSONObject) {
@@ -190,7 +278,10 @@ public class LocationFXMLController implements Initializable {
 
   public static String getLocation(String location, String tz, String Lt_d, String Lt_m, String Lt_s, String Lt_dir, String Lg_d, String Lg_m, String Lg_s, String Lg_dir) {
     final String DEGREE = "\u00b0";
-    location += ", " + Lt_d + DEGREE + " " + Lt_m + "\" " + Lt_s + "' " + Lt_dir;
+    if (!location.isEmpty()) {
+      location += ", ";
+    }
+    location += Lt_d + DEGREE + " " + Lt_m + "\" " + Lt_s + "' " + Lt_dir;
     location += ", " + Lg_d + DEGREE + " " + Lg_m + "\" " + Lg_s + "' " + Lg_dir;
     location += ", GMT " + tz;
     return location;
@@ -214,8 +305,8 @@ public class LocationFXMLController implements Initializable {
     cmbLatitudeDir.getItems().add(new Option("", ""));
     cmbLatitudeDir.getItems().add(new Option("N", "N"));
     cmbLatitudeDir.getItems().add(new Option("S", "S"));
-    String[] aTZh = {"","-12", "-11", "-10", "-9.5", "-9", "-8.5", "-8", "-7", "-6", "-5", "-4", "-3.5", "-3", "-2", "-1", "0", "1", "2", "3", "3.5", "4", "4.5", "5", "5.5", "6", "6.5", "7", "8", "9", "9.5", "10", "10.5", "11", "11.5", "12", "13"};
-    String[] aTZd = {"","-12:00", "-11:00", "-10:00", "-9:30", "-9:00", "-8:30", "-8:00 (PST)", "-7:00 (MST)", "-6:00 (CST)", "-5:00 (EST)", "-4:00 (AST)", "-3:30", "-3:00", "-2:00", "-1:00", "GMT 0:00", "+1:00", "+2:00", "+3:00", "+3:30", "+4:00", "+4:30", "+5:00", "+5:30", "+6:00", "+6:30", "+7:00", "+8:00", "+9:00", "+9:30", "+10:00", "+10:30", "+11:00", "+11:30", "+12:00", "+13:00"};
+    String[] aTZh = {"", "-12", "-11", "-10", "-9.5", "-9", "-8.5", "-8", "-7", "-6", "-5", "-4", "-3.5", "-3", "-2", "-1", "0", "1", "2", "3", "3.5", "4", "4.5", "5", "5.5", "6", "6.5", "7", "8", "9", "9.5", "10", "10.5", "11", "11.5", "12", "13"};
+    String[] aTZd = {"", "-12:00", "-11:00", "-10:00", "-9:30", "-9:00", "-8:30", "-8:00 (PST)", "-7:00 (MST)", "-6:00 (CST)", "-5:00 (EST)", "-4:00 (AST)", "-3:30", "-3:00", "-2:00", "-1:00", "GMT 0:00", "+1:00", "+2:00", "+3:00", "+3:30", "+4:00", "+4:30", "+5:00", "+5:30", "+6:00", "+6:30", "+7:00", "+8:00", "+9:00", "+9:30", "+10:00", "+10:30", "+11:00", "+11:30", "+12:00", "+13:00"};
     for (int i = 0; i < aTZd.length; i++) {
       addOption(aTZh[i], aTZd[i]);
     }
@@ -295,7 +386,13 @@ public class LocationFXMLController implements Initializable {
   @FXML
 
   private void delete(ActionEvent event) {
-    deleteLocation();
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        deleteLocation();
+      }
+    };
+    ConfirmationDialog confirmationDialog = new ConfirmationDialog(stage, "Are you sure you want to delete this location?", runnable);
   }
 
   @FXML
@@ -348,7 +445,7 @@ public class LocationFXMLController implements Initializable {
       String newValue = lstLocation.getSelectionModel().getSelectedItem();
       newValue = newValue.replace("[HOME] ", "");
       String[] location = newValue.split(",");
-      settings.setCurrentLocation(location[0]);
+      settings.setCurrentLocation(location.length >= 4 ? location[0] : "");
     }
   }
 

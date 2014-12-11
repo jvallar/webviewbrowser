@@ -123,18 +123,17 @@ public class ColumnChooserFXMLController implements Initializable {
     columns += chkWeekday.isSelected() ? ",Weekdays" : "";
     columns += chkDaylight.isSelected() ? ",Daylight Saving Time" : "";
     columns += chkTimezone.isSelected() ? ",Timezone" : "";
-    columns += chkGPS.isSelected() ? ",Latitude" : "";
-    columns += chkGPS.isSelected() ? ",Longitude" : "";
+    columns += chkGPS.isSelected() ? ",Latitude/Longitude" : "";
     columns += chkPhaseName.isSelected() ? ",Phase Name" : "";
     columns += chkPercentofFull.isSelected() ? ",Percent of Full" : "";
     columns += chkAgePercent.isSelected() ? ",Age (Percent)" : "";
     columns += chkAgeDays.isSelected() ? ",Age (Days)" : "";
     columns += chkAzimuth.isSelected() ? ",Azimuth" : "";
     columns += chkAltitude.isSelected() ? ",Altitude" : "";
-    columns += chkRiseTime.isSelected() ? ",Rise Time" : "";
-    columns += chkSetTime.isSelected() ? ",Set Time" : "";
-    columns += chkSetLocation.isSelected() ? ",Set Location" : "";
-    columns += chkRiseLocation.isSelected() ? ",Rise Location" : "";
+    columns += chkRiseTime.isSelected() && !chkRiseTime.isDisabled() ? ",Rise Time" : "";
+    columns += chkSetTime.isSelected() && !chkSetTime.isDisabled() ? ",Set Time" : "";
+    columns += chkSetLocation.isSelected() && !chkSetLocation.isDisabled() ? ",Set Location" : "";
+    columns += chkRiseLocation.isSelected() && !chkRiseLocation.isDisabled() ? ",Rise Location" : "";
     columns += chkMoonSign.isSelected() ? ",Moon Sign" : "";
 
     String dateFormat = cmbDateFormat.getValue() == null ? settings.getProgrammSettings("dt_format") : cmbDateFormat.getValue().getData();
@@ -182,6 +181,7 @@ public class ColumnChooserFXMLController implements Initializable {
     setCheckBox(showColumn(settings.getProgrammSettings("hayStack"), chkPhaseName), chkPhaseName);
     setCheckBox(showColumn(settings.getProgrammSettings("hayStack"), chkPercentofFull), chkPercentofFull);
     setCheckBox(showColumn(settings.getProgrammSettings("hayStack"), chkAgePercent), chkAgePercent);
+    setCheckBox(showColumn(settings.getProgrammSettings("hayStack"), chkAgeDays), chkAgeDays);
     setCheckBox(showColumn(settings.getProgrammSettings("hayStack"), chkAzimuth), chkAzimuth);
     setCheckBox(showColumn(settings.getProgrammSettings("hayStack"), chkAltitude), chkAltitude);
     setCheckBox(showColumn(settings.getProgrammSettings("hayStack"), chkRiseTime), chkRiseTime);
