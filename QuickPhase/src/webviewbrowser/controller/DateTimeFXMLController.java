@@ -28,6 +28,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import webviewbrowser.ConfirmationDialog;
 import webviewbrowser.InformationDialog;
 import webviewbrowser.Settings;
 import webviewbrowser.json.JSONException;
@@ -40,6 +41,8 @@ import webviewbrowser.json.JSONObject;
  */
 public class DateTimeFXMLController implements Initializable {
 
+  private static final String DEFAULT_ = "[DEFAULT] ";
+  private static final String CURRENT_ = "[CURRENT] ";
   @FXML
   private ListView<String> lstLocation;
   @FXML
@@ -89,16 +92,18 @@ public class DateTimeFXMLController implements Initializable {
     list = settings.getDateTimeSettings();
     btnEdit.disableProperty().bind(lstLocation.getSelectionModel().selectedItemProperty().isNull());
     btnDelete.disableProperty().bind(lstLocation.getSelectionModel().selectedItemProperty().isNull());
-    btnApply.disableProperty().bind(lstLocation.getSelectionModel().selectedItemProperty().isNull());        
+    btnApply.disableProperty().bind(lstLocation.getSelectionModel().selectedItemProperty().isNull());
 
     lstLocation.getItems().clear();
+    boolean found = false;
     for (JSONObject jSONObject : list) {
       try {
         String datetime = jSONObject.getString("datetime");
         if (datetime.equalsIgnoreCase(settings.getDefaultDatetime())) {
-          datetime = "[DEFAULT] " + datetime;
+          datetime = DEFAULT_ + datetime;
           lstLocation.getItems().add(datetime);
           lstLocation.getSelectionModel().select(datetime);
+          found = true;
         } else {
           lstLocation.getItems().add(datetime);
         }
@@ -106,13 +111,36 @@ public class DateTimeFXMLController implements Initializable {
         Logger.getLogger(BrowserFXMLController.class.getName()).log(Level.SEVERE, null, ex);
       }
     }
+    String currentdatetime = getCurrentDateTime();
+    if (!found) {
+      currentdatetime = DEFAULT_ + currentdatetime;
+      lstLocation.getItems().add(currentdatetime);
+      lstLocation.getSelectionModel().select(currentdatetime);
+    } else {
+      lstLocation.getItems().add(currentdatetime);
+    }
+  }
 
+  private String getCurrentDateTime() {
+    String listLabel = "";
+    try {
+      SimpleDateFormat originalFormat = new SimpleDateFormat("yyyy-MM-dd");
+      String dateStr = settings.getDate("").toString();
+      Date date2 = originalFormat.parse(dateStr);
+
+      SimpleDateFormat labelformat = new SimpleDateFormat("EEEE, dd MMM yyyy");
+      String newDatTimeFormat = labelformat.format(date2);
+      listLabel = CURRENT_ + newDatTimeFormat + " " + settings.getTime("");
+    } catch (ParseException ex) {
+      Logger.getLogger(DateTimeFXMLController.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    return listLabel;
   }
 
   private void initializeValues() {
     setTime(settings.getProgrammSettings("time"), txtTime);
     setDate(settings.getProgrammSettings("date"), date);
-    setCheckBox(settings.getCurrentDatetime().equalsIgnoreCase(settings.getProgrammSettings("datetime")) ? "yes" : "no", chkDefaulDateTime);
+    setCheckBox(settings.getDefaultDatetime().equalsIgnoreCase(settings.getProgrammSettings("datetime")) ? "yes" : "no", chkDefaulDateTime);
   }
 
   private void setCheckBox(String programmSettings, CheckBox chkDefaulDateTime) {
@@ -120,41 +148,12 @@ public class DateTimeFXMLController implements Initializable {
   }
 
   private void setDate(String programmSettings, DatePicker datePicker) {
-    try {
-      if (programmSettings.isEmpty()) {
-        Calendar calendar = Calendar.getInstance();
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DATE);
-        LocalDate lcDate = LocalDate.of(year, month + 1, day);
-        datePicker.setValue(lcDate);
-
-      } else {
-        SimpleDateFormat newformat = new SimpleDateFormat("MM/dd/yyyy");
-        Date date = newformat.parse(programmSettings);
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DATE);
-        LocalDate lcDate = LocalDate.of(year, month + 1, day);
-        datePicker.setValue(lcDate);
-      }
-    } catch (ParseException ex) {
-      datePicker.setValue(LocalDate.now());
-    }
+    datePicker.setValue(settings.getDate(programmSettings));
   }
 
   private void setTime(String programmSettings, TextField txtTime) {
-    if (programmSettings.isEmpty()) {
-      Calendar calendar = Calendar.getInstance();
-      int hour = calendar.get(Calendar.HOUR_OF_DAY);
-      int minute = calendar.get(Calendar.MINUTE);
-      txtTime.setText(hour + ":" + minute);
-    } else {
-      txtTime.setText(programmSettings);
-    }
+    txtTime.setText(settings.getTime(programmSettings));
+
   }
 
   @FXML
@@ -171,7 +170,6 @@ public class DateTimeFXMLController implements Initializable {
     } else {
       add();
     }
-
   }
 
   private void update() {
@@ -184,17 +182,22 @@ public class DateTimeFXMLController implements Initializable {
       SimpleDateFormat labelformat = new SimpleDateFormat("EEEE, dd MMM yyyy");
       String newDatTimeFormat = labelformat.format(date2);
       String listLabel = newDatTimeFormat + " " + txtTime.getText();
-      settings.setDefaultDatetime(listLabel);
 
       String newDate = newformat.format(date2);
-      settings.setDefaultDatetime(chkDefaulDateTime.isSelected() ? listLabel : settings.getDefaultDatetime());
-      settings.setProgramSettings("date", newDate);
-      settings.setProgramSettings("time", txtTime.getText());
-      settings.setProgramSettings("datetime", listLabel);
+      String newValue = lstLocation.getSelectionModel().getSelectedItem();
+      if (newValue.contains(CURRENT_)) {
+        settings.setDefaultDatetime(CURRENT_);
+      } else {
+        settings.setDefaultDatetime(chkDefaulDateTime.isSelected() ? listLabel : settings.getDefaultDatetime());
+        settings.setProgramSettings("date", newDate);
+        settings.setProgramSettings("time", txtTime.getText());
+        settings.setProgramSettings("datetime", listLabel);
+      }
 
       settings.storeProgramSettings();
       settings.loadProgramSettings();
       initializeListView();
+      clear();
     } catch (ParseException ex) {
       Logger.getLogger(DateTimeFXMLController.class.getName()).log(Level.SEVERE, null, ex);
     }
@@ -212,7 +215,13 @@ public class DateTimeFXMLController implements Initializable {
 
       SimpleDateFormat newformat = new SimpleDateFormat("MM/dd/yyyy");
       String newDate = newformat.format(date2);
-      settings.setCurrentDatetime(listLabel);
+      String newValue = lstLocation.getSelectionModel().getSelectedItem();
+      if (newValue.contains(CURRENT_) && edit) {
+        settings.setDefaultDatetime(CURRENT_);
+      } else {
+        settings.setDefaultDatetime(chkDefaulDateTime.isSelected() ? listLabel : settings.getDefaultDatetime());
+
+      }
       settings.setProgramSettings("date", newDate);
       settings.setProgramSettings("time", txtTime.getText());
       settings.storeProgramSettings();
@@ -221,6 +230,12 @@ public class DateTimeFXMLController implements Initializable {
     } catch (ParseException ex) {
       Logger.getLogger(DateTimeFXMLController.class.getName()).log(Level.SEVERE, null, ex);
     }
+  }
+
+  private void clear() {
+    date.setValue(null);
+    txtTime.setText("");
+    chkDefaulDateTime.setSelected(false);
   }
 
   @FXML
@@ -235,23 +250,21 @@ public class DateTimeFXMLController implements Initializable {
 
   public void applyCommon() {
     try {
-      String currentDate = settings.getCurrentDatetime();
-      
-      SimpleDateFormat labelformat = new SimpleDateFormat("EEEE, dd MMM yyyy hh:mm");
-      Date date = labelformat.parse(currentDate);
-      SimpleDateFormat newformat = new SimpleDateFormat("MM/dd/yyyy");
-      String newDate = newformat.format(date);
-      String time = settings.getCurrentDatetime().split(" ")[4];
+      String currentDate = getDateString();
+//      
+//      SimpleDateFormat labelformat = new SimpleDateFormat("EEEE, dd MMM yyyy hh:mm");
+//      Date date = labelformat.parse(currentDate);
+//      SimpleDateFormat newformat = new SimpleDateFormat("MM/dd/yyyy");
+//      String newDate = newformat.format(date);
+//      String time = settings.getCurrentDatetime().split(" ")[4];
 //      settings.setProgramSettings("date", newDate);
 //      settings.setProgramSettings("time", time);
 
-      settings.tempOject.put("date", newDate);
+      settings.tempOject.put("date", currentDate);
       settings.tempOject.put("time", txtTime.getText());
       browserController.newHandleSetDateTime(getDateString(), txtTime.getText());
     } catch (JSONException ex) {
       Logger.getLogger(LocationFXMLController.class.getName()).log(Level.SEVERE, null, ex);
-    } catch (ParseException ex) {
-      Logger.getLogger(DateTimeFXMLController.class.getName()).log(Level.SEVERE, null, ex);
     }
   }
 
@@ -262,7 +275,14 @@ public class DateTimeFXMLController implements Initializable {
 
   @FXML
   private void delete(ActionEvent event) {
-    deleteDateTime();
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        deleteDateTime();
+      }
+    };
+    ConfirmationDialog confirmationDialog = new ConfirmationDialog(stage, "Are you sure you want to delete this date and time?", runnable);
+
   }
 
   @FXML
@@ -276,13 +296,21 @@ public class DateTimeFXMLController implements Initializable {
     try {
       settings.tempOject.put("is_temporary", false);
       String currentDate = settings.getCurrentDatetime();
-      
+
       SimpleDateFormat labelformat = new SimpleDateFormat("EEEE, dd MMM yyyy hh:mm");
       Date date = labelformat.parse(currentDate);
       SimpleDateFormat newformat = new SimpleDateFormat("MM/dd/yyyy");
       String newDate = newformat.format(date);
-      String time = settings.getCurrentDatetime().split(" ")[4];
+      final String[] dateValues = settings.getCurrentDatetime().split(" ");
+      String time = dateValues[4];
       browserController.newHandleSetDateTime(newDate, time);
+
+      String newValue = lstLocation.getSelectionModel().getSelectedItem();
+      if (newValue.contains(CURRENT_)) {
+        settings.setDefaultDatetime(CURRENT_);
+      }
+      settings.storeProgramSettings();
+      settings.loadProgramSettings();
     } catch (JSONException ex) {
       Logger.getLogger(LocationFXMLController.class.getName()).log(Level.SEVERE, null, ex);
     } catch (ParseException ex) {
@@ -331,7 +359,8 @@ public class DateTimeFXMLController implements Initializable {
       }
     } else {
       String newValue = lstLocation.getSelectionModel().getSelectedItem();
-      newValue = newValue.replace("[DEFAULT] ", "");
+      newValue = newValue.replace(DEFAULT_, "");
+      newValue = newValue.replace(CURRENT_, "");
       settings.setCurrentDatetime(newValue);
     }
   }

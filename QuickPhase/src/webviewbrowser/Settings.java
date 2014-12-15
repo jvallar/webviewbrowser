@@ -14,7 +14,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -454,11 +456,11 @@ public class Settings {
       stage.initOwner(Main.primaryStage);
       stage.setTitle("Interval");
       stage.setScene(new Scene(myActivation, 400, 500));
-      stage.show();  
+      stage.show();
     } catch (IOException ex) {
     }
-  }  
-   
+  }
+
   public void showFindData() {
     System.err.println("testing");
     try {
@@ -472,13 +474,13 @@ public class Settings {
       stage.initOwner(Main.primaryStage);
       stage.setTitle("Find");
       stage.setScene(new Scene(myActivation, 310, 210));
-      stage.show();  
+      stage.show();
     } catch (IOException ex) {
     }
   }
 
   private String getProgramSettingType(String settings) {
-    String[] datetime = {"date", "time"};
+    String[] datetime = {"date", "time", "datetime"};
     String[] location = {"tz", "apply_dst", "Lt_d", "Lt_m", "Lt_s", "Lt_dir", "Lg_d", "Lg_m", "Lg_s", "Lg_dir", "location"};
     for (String string : location) {
       if (settings.equalsIgnoreCase(string)) {
@@ -527,5 +529,41 @@ public class Settings {
 
   public double getHeight() {
     return Main.primaryStage.getHeight();
+  }
+
+  public String getTime(String programmSettings) {
+    if (programmSettings.isEmpty()) {
+      Calendar calendar = Calendar.getInstance();
+      int hour = calendar.get(Calendar.HOUR_OF_DAY);
+      int minute = calendar.get(Calendar.MINUTE);
+      return hour + ":" + minute;
+    } else {
+      return programmSettings;
+    }
+  }
+
+  public LocalDate getDate(String programmSettings) {
+    try {
+      if (programmSettings.isEmpty()) {
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DATE);
+        LocalDate lcDate = LocalDate.of(year, month + 1, day);
+        return lcDate;
+      } else {
+        SimpleDateFormat newformat = new SimpleDateFormat("MM/dd/yyyy");
+        Date date = newformat.parse(programmSettings);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DATE);
+        return LocalDate.of(year, month + 1, day);
+      }
+    } catch (ParseException ex) {
+      return LocalDate.now();
+    }
   }
 }

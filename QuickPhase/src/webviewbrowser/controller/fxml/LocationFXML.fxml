@@ -29,7 +29,7 @@
                      <children>
                         <ToolBar prefHeight="234.0" prefWidth="341.0" style="-fx-background-color: #000000;">
                            <items>
-                              <VBox prefHeight="224.0" prefWidth="321.0">
+                              <VBox prefHeight="246.0" prefWidth="321.0">
                                  <children>
                                     <ToolBar prefHeight="40.0" prefWidth="200.0" style="-fx-background-color: #000000;">
                                        <items>
@@ -79,10 +79,16 @@
                                        </children>
                                     </HBox>
                                     <Label text="                             when applicable to your Time Zone." textFill="#c5c5c5" />
+                                    <HBox prefHeight="30.0" prefWidth="321.0">
+                                       <children>
+                                          <Region prefHeight="30.0" prefWidth="9.0" />
+                                          <CheckBox fx:id="chkHomeLocation" mnemonicParsing="false" prefHeight="23.0" prefWidth="264.0" text="Make this my Home Location" textFill="#bebebe" />
+                                       </children>
+                                    </HBox>
                                     <HBox>
                                        <children>
                                           <Region prefHeight="18.0" prefWidth="9.0" />
-                                          <CheckBox fx:id="chkDefaultLocation" mnemonicParsing="false" prefHeight="23.0" prefWidth="264.0" text="Make this Home location" textFill="#bebebe" />
+                                          <CheckBox fx:id="chkDefaultLocation" mnemonicParsing="false" prefHeight="23.0" prefWidth="264.0" text="Always use this location when program opens" textFill="#bebebe" />
                                        </children>
                                     </HBox>
                                  </children>
@@ -104,6 +110,6 @@
             <Separator prefWidth="200.0" />
          </children>
       </VBox>
-      <Button fx:id="btnClose" layoutX="167.0" layoutY="485.0" mnemonicParsing="false" onAction="#cancel" text="Close" />
+      <Button fx:id="btnClose" layoutX="177.0" layoutY="485.0" mnemonicParsing="false" onAction="#cancel" text="Close" />
    </children>
 </AnchorPane>

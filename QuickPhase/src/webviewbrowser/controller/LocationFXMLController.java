@@ -37,6 +37,9 @@ import webviewbrowser.json.JSONObject;
  */
 public class LocationFXMLController implements Initializable {
 
+  private static final String DEFAULT_ = "[DEFAULT] ";
+  private static final String HOME_ = "[HOME] ";
+
   @FXML
   private ListView<String> lstLocation;
   @FXML
@@ -74,12 +77,12 @@ public class LocationFXMLController implements Initializable {
   private Button btnEdit;
   @FXML
   private TextField txtLocation;
-  @FXML
-  private Button btnAdd;
   private boolean edit = false;
   private Stage stage;
   @FXML
   private CheckBox chkDefaultLocation;
+  @FXML
+  private CheckBox chkHomeLocation;
 
   /**
    * InitializebtnDeletetr @FXML private Button btnSave1;
@@ -371,7 +374,7 @@ public class LocationFXMLController implements Initializable {
       try {
         String location = getLocation(jSONObject);
         if (jSONObject.getString("location").equalsIgnoreCase(settings.getDefaultLocation())) {
-          location = "[HOME] " + location;
+          location = DEFAULT_ + location;
           lstLocation.getItems().add(location);
           lstLocation.getSelectionModel().select(location);
         } else {
@@ -384,7 +387,6 @@ public class LocationFXMLController implements Initializable {
   }
 
   @FXML
-
   private void delete(ActionEvent event) {
     Runnable runnable = new Runnable() {
       @Override
@@ -443,13 +445,12 @@ public class LocationFXMLController implements Initializable {
       }
     } else {
       String newValue = lstLocation.getSelectionModel().getSelectedItem();
-      newValue = newValue.replace("[HOME] ", "");
+      newValue = newValue.replace(DEFAULT_, "");
       String[] location = newValue.split(",");
       settings.setCurrentLocation(location.length >= 4 ? location[0] : "");
     }
   }
 
-  @FXML
   private void apply(ActionEvent event) {
     try {
       settings.tempOject.put("is_temporary", true);
