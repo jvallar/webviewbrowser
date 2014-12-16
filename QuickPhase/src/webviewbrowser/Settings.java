@@ -190,7 +190,7 @@ public class Settings {
 
       currentDatetime = datetime.isEmpty() ? saveDatetime : datetime;
       defaultDatetime = saveDatetime;
-
+      
       JSONArray arrayDatetime = obj.getJSONArray("list_datetime");
       list_datetime.clear();
       for (int i = 0; i < arrayDatetime.length(); i++) {

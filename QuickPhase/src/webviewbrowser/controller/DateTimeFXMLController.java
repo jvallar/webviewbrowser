@@ -189,9 +189,10 @@ public class DateTimeFXMLController implements Initializable {
         settings.setDefaultDatetime(CURRENT_);
       } else {
         settings.setDefaultDatetime(chkDefaulDateTime.isSelected() ? listLabel : settings.getDefaultDatetime());
+        settings.setCurrentDatetime(listLabel);
+        settings.setProgramSettings("datetime", listLabel);
         settings.setProgramSettings("date", newDate);
         settings.setProgramSettings("time", txtTime.getText());
-        settings.setProgramSettings("datetime", listLabel);
       }
 
       settings.storeProgramSettings();
@@ -215,15 +216,16 @@ public class DateTimeFXMLController implements Initializable {
 
       SimpleDateFormat newformat = new SimpleDateFormat("MM/dd/yyyy");
       String newDate = newformat.format(date2);
-      String newValue = lstLocation.getSelectionModel().getSelectedItem();
-      if (newValue.contains(CURRENT_) && edit) {
-        settings.setDefaultDatetime(CURRENT_);
-      } else {
-        settings.setDefaultDatetime(chkDefaulDateTime.isSelected() ? listLabel : settings.getDefaultDatetime());
 
-      }
+      System.err.println("listLabel = " + listLabel);
+      settings.setDefaultDatetime(chkDefaulDateTime.isSelected() ? listLabel : settings.getDefaultDatetime());
+      settings.setCurrentDatetime(listLabel);
+      settings.setProgramSettings("datetime", listLabel);
       settings.setProgramSettings("date", newDate);
       settings.setProgramSettings("time", txtTime.getText());
+
+      
+      
       settings.storeProgramSettings();
       settings.loadProgramSettings();
       initializeListView();
