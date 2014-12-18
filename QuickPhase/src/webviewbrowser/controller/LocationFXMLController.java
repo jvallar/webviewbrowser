@@ -21,6 +21,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import webviewbrowser.ConfirmationDialog;
@@ -83,6 +84,8 @@ public class LocationFXMLController implements Initializable {
   private CheckBox chkDefaultLocation;
   @FXML
   private CheckBox chkHomeLocation;
+  @FXML
+  private Tooltip tipHomeLocation;
 
   /**
    * InitializebtnDeletetr @FXML private Button btnSave1;
@@ -156,6 +159,7 @@ public class LocationFXMLController implements Initializable {
     Lg_dir = Lg_dir.isEmpty() ? longitude_decimal.compareTo(BigDecimal.ZERO) > 0 ? "W" : "E" : Lg_dir;
 
     settings.setDefaultLocation(chkDefaultLocation.isSelected() ? txtLocation.getText() : settings.getDefaultLocation());
+    settings.setHomeLocation(chkHomeLocation.isSelected() ? txtLocation.getText() : settings.getHomeLocation());
     settings.setProgramSettings("location", txtLocation.getText());
     settings.setProgramSettings("tz", tz);
     settings.setProgramSettings("apply_dst", apply_dst);
@@ -216,6 +220,7 @@ public class LocationFXMLController implements Initializable {
     Lt_dir = Lt_dir.isEmpty() ? latitude_decimal.compareTo(BigDecimal.ZERO) > 0 ? "N" : "S" : Lt_dir;
     Lg_dir = Lg_dir.isEmpty() ? longitude_decimal.compareTo(BigDecimal.ZERO) > 0 ? "W" : "E" : Lg_dir;
     settings.setDefaultLocation(chkDefaultLocation.isSelected() ? txtLocation.getText() : settings.getDefaultLocation());
+    settings.setHomeLocation(chkHomeLocation.isSelected() ? txtLocation.getText() : settings.getHomeLocation());
     settings.setCurrentLocation(txtLocation.getText());
     settings.setProgramSettings("location", txtLocation.getText());
     settings.setProgramSettings("tz", tz);
@@ -344,7 +349,9 @@ public class LocationFXMLController implements Initializable {
 
     setCheckBox(settings.getProgrammSettings("apply_dst"), chkApplyDayLightSaving);
     setCheckBox(settings.getDefaultLocation().equalsIgnoreCase(settings.getProgrammSettings("location")) ? "yes" : "no", chkDefaultLocation);
+    setCheckBox(settings.getHomeLocation().equalsIgnoreCase(settings.getProgrammSettings("location")) ? "yes" : "no", chkHomeLocation);
 
+    chkHomeLocation.setDisable(chkHomeLocation.isSelected());
     setTextField(settings.getProgrammSettings("Lt_d"), txtLatitudeD);
     setTextField(settings.getProgrammSettings("Lt_m"), txtLatitudeM);
     setTextField(settings.getProgrammSettings("Lt_s"), txtLatitudeS);
@@ -358,26 +365,31 @@ public class LocationFXMLController implements Initializable {
 
   private void initializeListView() {
     list = settings.getLocationSettings();
-//    lstLocation.getSelectionModel().selectedItemProperty()
-//            .addListener(new ChangeListener<String>() {
-//              @Override
-//              public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-//                String[] location = newValue.split(",");
-//                settings.setCurrentLocation(location[0]);
-//              }
-//            });
     btnEdit.disableProperty().bind(lstLocation.getSelectionModel().selectedItemProperty().isNull());
     btnDelete.disableProperty().bind(lstLocation.getSelectionModel().selectedItemProperty().isNull());
     btnApply.disableProperty().bind(lstLocation.getSelectionModel().selectedItemProperty().isNull());
     lstLocation.getItems().clear();
     for (JSONObject jSONObject : list) {
       try {
-        String location = getLocation(jSONObject);
+        String location = "";
         if (jSONObject.getString("location").equalsIgnoreCase(settings.getDefaultLocation())) {
-          location = DEFAULT_ + location;
+          if (jSONObject.getString("location").equalsIgnoreCase(settings.getHomeLocation())) {
+            location += HOME_;
+          }
+          location += DEFAULT_;
+          location += getLocation(jSONObject);
+          lstLocation.getItems().add(location);
+          lstLocation.getSelectionModel().select(location);
+        } else if (jSONObject.getString("location").equalsIgnoreCase(settings.getHomeLocation())) {
+          if (jSONObject.getString("location").equalsIgnoreCase(settings.getDefaultLocation())) {
+            location += DEFAULT_;
+          }
+          location += HOME_;
+          location += getLocation(jSONObject);
           lstLocation.getItems().add(location);
           lstLocation.getSelectionModel().select(location);
         } else {
+          location = getLocation(jSONObject);
           lstLocation.getItems().add(location);
         }
       } catch (JSONException ex) {
@@ -446,6 +458,7 @@ public class LocationFXMLController implements Initializable {
     } else {
       String newValue = lstLocation.getSelectionModel().getSelectedItem();
       newValue = newValue.replace(DEFAULT_, "");
+      newValue = newValue.replace(HOME_, "");
       String[] location = newValue.split(",");
       settings.setCurrentLocation(location.length >= 4 ? location[0] : "");
     }
@@ -488,6 +501,7 @@ public class LocationFXMLController implements Initializable {
 
     setCheckBox("", chkApplyDayLightSaving);
     setCheckBox("no", chkDefaultLocation);
+    setCheckBox("no", chkHomeLocation);
 
     setTextField("", txtLatitudeD);
     setTextField("", txtLatitudeM);

@@ -82,7 +82,10 @@
                                     <HBox prefHeight="30.0" prefWidth="321.0">
                                        <children>
                                           <Region prefHeight="30.0" prefWidth="9.0" />
-                                          <CheckBox fx:id="chkHomeLocation" mnemonicParsing="false" prefHeight="23.0" prefWidth="264.0" text="Make this my Home Location" textFill="#bebebe" />
+                                          <CheckBox fx:id="chkHomeLocation" mnemonicParsing="false" prefHeight="23.0" prefWidth="264.0" text="Make this my Home Location" textFill="#bebebe">
+                                             <tooltip>
+                                                <Tooltip fx:id="tipHomeLocation" text="To change your Home location, please select a different location or create a new location, and then click this checkbox." />
+                                             </tooltip></CheckBox>
                                        </children>
                                     </HBox>
                                     <HBox>
@@ -101,10 +104,7 @@
             </VBox>
             <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="242.0" style="-fx-background-color: #000000;">
                <items>
-                  <Button fx:id="btnSave" mnemonicParsing="false" onAction="#save" text="Save">
-                     <tooltip>
-                        <Tooltip text="Empty Tooltip" />
-                     </tooltip></Button>
+                  <Button fx:id="btnSave" mnemonicParsing="false" onAction="#save" text="Save" />
                </items>
             </ToolBar>
             <Separator prefWidth="200.0" />

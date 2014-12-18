@@ -6,6 +6,7 @@
 package webviewbrowser.controller;
 
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -152,7 +153,7 @@ public class DateTimeFXMLController implements Initializable {
   }
 
   private void setTime(String programmSettings, TextField txtTime) {
-    txtTime.setText(settings.getTime(programmSettings));
+    txtTime.setText(formatTime(settings.getTime(programmSettings)));
 
   }
 
@@ -192,7 +193,7 @@ public class DateTimeFXMLController implements Initializable {
         settings.setCurrentDatetime(listLabel);
         settings.setProgramSettings("datetime", listLabel);
         settings.setProgramSettings("date", newDate);
-        settings.setProgramSettings("time", txtTime.getText());
+        settings.setProgramSettings("time", formatTime(txtTime.getText()));
       }
 
       settings.storeProgramSettings();
@@ -202,6 +203,47 @@ public class DateTimeFXMLController implements Initializable {
     } catch (ParseException ex) {
       Logger.getLogger(DateTimeFXMLController.class.getName()).log(Level.SEVERE, null, ex);
     }
+  }
+
+  private String formatTime(String time) {
+    try {
+      String clock = settings.getProgrammSettings("clock");
+      String saveClock = "24hr";
+      DateFormat twentyfourformat = new SimpleDateFormat("HH:mm");
+      DateFormat HOURformat = new SimpleDateFormat("HH");
+      DateFormat hourformat = new SimpleDateFormat("hha");
+      DateFormat twelveFormat = new SimpleDateFormat("hh:mm a");
+      if ((time.contains("AM") || time.contains("PM")) && time.length() >= 5) {
+        saveClock = "12hr";
+      }else if (time.length() <= 2) {
+        saveClock = "HH";
+      } else if ((time.contains("AM") || time.contains("PM"))  && time.length() <= 4 && !time.contains(":")) {
+        saveClock = "hha";
+      }
+
+      if (clock.equalsIgnoreCase("24hr") && !saveClock.equalsIgnoreCase(clock)) {
+        Date date = twelveFormat.parse(time);
+        return twentyfourformat.format(date);
+      } else if (!saveClock.equalsIgnoreCase(clock)) {
+        Date date = twentyfourformat.parse(time);
+        return twelveFormat.format(date);
+      } else if (saveClock.equalsIgnoreCase("HH") && clock.equalsIgnoreCase("24hr")) {
+        Date date = HOURformat.parse(time);
+        return twentyfourformat.format(date);
+      } else if (saveClock.equalsIgnoreCase("HH") && clock.equalsIgnoreCase("12hr")) {
+        Date date = HOURformat.parse(time);
+        return twelveFormat.format(date);
+      } else if (saveClock.equalsIgnoreCase("hha") && clock.equalsIgnoreCase("24hr")) {
+        Date date = hourformat.parse(time);
+        return twentyfourformat.format(date);
+      } else if (saveClock.equalsIgnoreCase("hha") && clock.equalsIgnoreCase("12hr")) {
+        Date date = hourformat.parse(time);
+        return twelveFormat.format(date);
+      }
+    } catch (ParseException ex) {
+      Logger.getLogger(DateTimeFXMLController.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    return time;
   }
 
   private void add() {
@@ -217,15 +259,12 @@ public class DateTimeFXMLController implements Initializable {
       SimpleDateFormat newformat = new SimpleDateFormat("MM/dd/yyyy");
       String newDate = newformat.format(date2);
 
-      System.err.println("listLabel = " + listLabel);
       settings.setDefaultDatetime(chkDefaulDateTime.isSelected() ? listLabel : settings.getDefaultDatetime());
       settings.setCurrentDatetime(listLabel);
       settings.setProgramSettings("datetime", listLabel);
       settings.setProgramSettings("date", newDate);
-      settings.setProgramSettings("time", txtTime.getText());
+      settings.setProgramSettings("time", formatTime(txtTime.getText()));
 
-      
-      
       settings.storeProgramSettings();
       settings.loadProgramSettings();
       initializeListView();

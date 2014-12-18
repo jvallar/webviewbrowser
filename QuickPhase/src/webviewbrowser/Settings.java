@@ -59,6 +59,7 @@ public class Settings {
   String currentDatetime = "";
   String defaultLocation = "";
   String defaultDatetime = "";
+  String homeLocation ="";
   List<JSONObject> list_location;
   List<JSONObject> list_datetime;
   private DateFormatFXMLController dateFormatFXMLController;
@@ -106,6 +107,12 @@ public class Settings {
         for (int i = 0; i < arrayLocation.length(); i++) {
           JSONObject object = arrayLocation.getJSONObject(i);
           if (object.getString("location").equalsIgnoreCase(currentLocation)) {
+            return object.getString(settings);
+          }
+        }
+        for (int i = 0; i < arrayLocation.length(); i++) {
+          JSONObject object = arrayLocation.getJSONObject(i);
+          if (object.getString("location").equalsIgnoreCase(homeLocation)) {
             return object.getString(settings);
           }
         }
@@ -200,8 +207,11 @@ public class Settings {
 
       JSONArray arrayLocation = obj.getJSONArray("list_location");
       list_location.clear();
-      currentLocation = location.isEmpty() ? obj.getString("default_location") : location;
-      defaultLocation = obj.getString("default_location");
+      
+      String saveLocation = obj.getString("default_location");
+      homeLocation = obj.getString("home_location");
+      currentLocation = location.isEmpty() ? saveLocation.isEmpty()?homeLocation:saveLocation: location ;
+      defaultLocation = saveLocation;
       for (int i = 0; i < arrayLocation.length(); i++) {
         JSONObject object = arrayLocation.getJSONObject(i);
         list_location.add(object);
@@ -219,6 +229,7 @@ public class Settings {
       obj.put("list_location", list_location);
       obj.put("default_location", defaultLocation);
       obj.put("default_datetime", defaultDatetime);
+      obj.put("home_location", homeLocation);
       obj.put("list_datetime", list_datetime);
       File file = new File("settings.nosemaj");
       file.createNewFile();
@@ -355,6 +366,14 @@ public class Settings {
     this.currentDatetime = currentDatetime;
   }
 
+  public String getHomeLocation() {
+    return homeLocation;
+  }
+
+  public void setHomeLocation(String homeLocation) {
+    this.homeLocation = homeLocation;
+  }
+
   public void callDefaultBrowser(String urlString) {
     if (Desktop.isDesktopSupported()) {
       try {
@@ -462,7 +481,6 @@ public class Settings {
   }
 
   public void showFindData() {
-    System.err.println("testing");
     try {
       FXMLLoader fxmlLoader = new FXMLLoader();
       Parent myActivation = fxmlLoader.load(getClass().getResource("controller/fxml/FindDataFXML.fxml").openStream());
