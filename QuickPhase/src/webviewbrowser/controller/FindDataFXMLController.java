@@ -72,21 +72,21 @@ public class FindDataFXMLController implements Initializable {
 
   @FXML
   private void apply(ActionEvent event) {
-    String numberOfResults = txtNumber.getText();
+    String numberOfResults = txtNumber.getText().isEmpty() ? "10" : txtNumber.getText();
     String month = cmbMonth.getValue() == null ? "0" : cmbMonth.getValue().getData();
     String day = cmbDay.getValue() == null ? "0" : cmbDay.getValue().getData();
     Integer number = Integer.parseInt(numberOfResults);
-    if(number >4000){      
+    if (number > 4000) {
       new InformationDialog(stage, "The maximumber number of results is only 3000");
       return;
     }
-    if(cmbPhaseName.getValue()==null){      
+    if (cmbPhaseName.getValue() == null) {
       new InformationDialog(stage, "Please select moon Phase");
       return;
     }
     String name = cmbPhaseName.getValue().getData();
     String date = getDate();
-    if(date.isEmpty()){      
+    if (date.isEmpty()) {
       new InformationDialog(stage, "Please select valid Date");
       return;
     }
@@ -118,15 +118,15 @@ public class FindDataFXMLController implements Initializable {
 
   }
 
-  public Date getFirstDate(){
-    
-      Calendar calendar = Calendar.getInstance();
-      calendar.set(Calendar.YEAR, 1582);
-      calendar.set(Calendar.MONTH,9);
-      calendar.set(Calendar.DATE,12);
-      return calendar.getTime();
+  public Date getFirstDate() {
+
+    Calendar calendar = Calendar.getInstance();
+    calendar.set(Calendar.YEAR, 1582);
+    calendar.set(Calendar.MONTH, 9);
+    calendar.set(Calendar.DATE, 12);
+    return calendar.getTime();
   }
-  
+
   public String getDate() {
     try {
       Calendar calendar = Calendar.getInstance();
@@ -141,7 +141,7 @@ public class FindDataFXMLController implements Initializable {
       Date date2 = originalFormat.parse(dateStr);
       String newDate = newformat.format(date2);
       Date date = getFirstDate();
-      if(date2.before(date)){
+      if (date2.before(date)) {
         return "";
       }
       return newDate;
