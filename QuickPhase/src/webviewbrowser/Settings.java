@@ -465,12 +465,13 @@ public class Settings {
 
   public void showColumnChooserDialog() {
     try {
+      Stage stage = new Stage();
       FXMLLoader fxmlLoader = new FXMLLoader();
       Parent myActivation = fxmlLoader.load(getClass().getResource("controller/fxml/ColumnChooserFXML.fxml").openStream());
       columnChooserController = (ColumnChooserFXMLController) fxmlLoader.getController();
       columnChooserController.setBrowserController(browser);
       columnChooserController.setSettings(this);
-      Stage stage = new Stage();
+      columnChooserController.setStage(stage);
       stage.initModality(Modality.APPLICATION_MODAL);
       stage.initOwner(Main.primaryStage);
       stage.setTitle("Interval");
@@ -482,12 +483,13 @@ public class Settings {
 
   public void showFindData() {
     try {
+      Stage stage = new Stage();
       FXMLLoader fxmlLoader = new FXMLLoader();
       Parent myActivation = fxmlLoader.load(getClass().getResource("controller/fxml/FindDataFXML.fxml").openStream());
       findDataFXMLController = (FindDataFXMLController) fxmlLoader.getController();
       findDataFXMLController.setBrowserController(browser);
       findDataFXMLController.setSettings(this);
-      Stage stage = new Stage();
+      findDataFXMLController.setStage(stage);
       stage.initModality(Modality.APPLICATION_MODAL);
       stage.initOwner(Main.primaryStage);
       stage.setTitle("Find");

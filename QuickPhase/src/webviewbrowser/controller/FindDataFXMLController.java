@@ -23,6 +23,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
+import webviewbrowser.InformationDialog;
 import webviewbrowser.Settings;
 import webviewbrowser.common.Option;
 
@@ -49,6 +51,7 @@ public class FindDataFXMLController implements Initializable {
   private ComboBox<Option> cmbDay;
   @FXML
   private DatePicker date;
+  private Stage stage;
 
   /**
    * Initializes the controller class.
@@ -69,12 +72,25 @@ public class FindDataFXMLController implements Initializable {
 
   @FXML
   private void apply(ActionEvent event) {
-    String number = txtNumber.getText();
+    String numberOfResults = txtNumber.getText();
     String month = cmbMonth.getValue() == null ? "0" : cmbMonth.getValue().getData();
     String day = cmbDay.getValue() == null ? "0" : cmbDay.getValue().getData();
+    Integer number = Integer.parseInt(numberOfResults);
+    if(number >4000){      
+      new InformationDialog(stage, "The maximumber number of results is only 3000");
+      return;
+    }
+    if(cmbPhaseName.getValue()==null){      
+      new InformationDialog(stage, "Please select moon Phase");
+      return;
+    }
     String name = cmbPhaseName.getValue().getData();
     String date = getDate();
-    browserController.setFindData(number, month, day, name, date);
+    if(date.isEmpty()){      
+      new InformationDialog(stage, "Please select valid Date");
+      return;
+    }
+    browserController.setFindData(numberOfResults, month, day, name, date);
     ((Node) (event.getSource())).getScene().getWindow().hide();
   }
 
@@ -102,6 +118,15 @@ public class FindDataFXMLController implements Initializable {
 
   }
 
+  public Date getFirstDate(){
+    
+      Calendar calendar = Calendar.getInstance();
+      calendar.set(Calendar.YEAR, 1582);
+      calendar.set(Calendar.MONTH,9);
+      calendar.set(Calendar.DATE,12);
+      return calendar.getTime();
+  }
+  
   public String getDate() {
     try {
       Calendar calendar = Calendar.getInstance();
@@ -115,6 +140,10 @@ public class FindDataFXMLController implements Initializable {
       String dateStr = date.getValue() == null ? lcDate.toString() : date.getValue().toString();
       Date date2 = originalFormat.parse(dateStr);
       String newDate = newformat.format(date2);
+      Date date = getFirstDate();
+      if(date2.before(date)){
+        return "";
+      }
       return newDate;
     } catch (ParseException ex) {
       Logger.getLogger(ColumnChooserFXMLController.class.getName()).log(Level.SEVERE, null, ex);
@@ -125,6 +154,10 @@ public class FindDataFXMLController implements Initializable {
   @FXML
   private void cancel(ActionEvent event) {
     ((Node) (event.getSource())).getScene().getWindow().hide();
+  }
+
+  public void setStage(Stage stage) {
+    this.stage = stage;
   }
 
 }

@@ -30,6 +30,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
+import javafx.stage.Stage;
+import webviewbrowser.ConfirmationDialog;
+import webviewbrowser.InformationDialog;
 import webviewbrowser.Settings;
 import webviewbrowser.common.Option;
 
@@ -96,6 +99,7 @@ public class ColumnChooserFXMLController implements Initializable {
   private CheckBox chkDaylight;
   @FXML
   private CheckBox chkRiseLocation;
+  private Stage stage;
 
   /**
    * Initializes the controller class.
@@ -136,21 +140,55 @@ public class ColumnChooserFXMLController implements Initializable {
     columns += chkRiseLocation.isSelected() && !chkRiseLocation.isDisabled() ? ",Rise Location" : "";
     columns += chkMoonSign.isSelected() ? ",Moon Sign" : "";
 
-    String dateFormat = cmbDateFormat.getValue() == null ? settings.getProgrammSettings("dt_format") : cmbDateFormat.getValue().getData();
-    String timeFormat = cmbTimeFormat.getValue() == null ? settings.getProgrammSettings("clock") : cmbTimeFormat.getValue().getData();
+    String dateFormat = cmbDateFormat.getValue() == null ? settings.getProgrammSettings("dt_format").isEmpty() ? "mm/dd/yyyy" : settings.getProgrammSettings("dt_format") : cmbDateFormat.getValue().getData();
+    String timeFormat = cmbTimeFormat.getValue() == null ? settings.getProgrammSettings("clock").isEmpty() ? "12hr" : settings.getProgrammSettings("clock") : cmbTimeFormat.getValue().getData();
     String timOfDay = cmbTimeOfDay.getValue() == null ? "0" : cmbTimeOfDay.getValue().getData();
     String interval = rbtnHourly.isSelected() ? "hourly" : "daily";
     String date = getDate();
-    String numberOfDays = txtNumberDays.getText().isEmpty() ? "10" : txtNumberDays.getText();
-
-    browserController.setInterval(columns, dateFormat, timeFormat, timOfDay, date, numberOfDays, interval);
+    if(date.isEmpty()){      
+      new InformationDialog(stage, "Please select valid Date");
+      return;
+    }
+    String numberOfResults = txtNumberDays.getText().isEmpty() ? "10" : txtNumberDays.getText();
+    Integer number = Integer.parseInt(numberOfResults);
+    if(number >4000){      
+      new InformationDialog(stage, "The maximumber number of results is only 4000");
+      return;
+    }
+    if(columns.isEmpty()){         
+      new InformationDialog(stage, "Please select at least one column");
+      return;
+    }
+    if(settings.getProgrammSettings("default_location").isEmpty()){    
+      Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        settings.showConfigDialog("");
+      }
+    };
+    ConfirmationDialog confirmationDialog = new ConfirmationDialog(stage, "You have no default location set. Would you like to create a new location?", runnable);    
+    }else{
+      browserController.setInterval(columns, dateFormat, timeFormat, timOfDay, date, numberOfResults, interval);
+    }
 
     settings.setProgramSettings("hayStack", columns);
     settings.storeProgramSettings();
     settings.loadProgramSettings();
     ((Node) (event.getSource())).getScene().getWindow().hide();
   }
-
+  
+  public void setStage(Stage stage) {
+    this.stage = stage;
+  }
+  
+  public Date getFirstDate(){
+    
+      Calendar calendar = Calendar.getInstance();
+      calendar.set(Calendar.YEAR, 1582);
+      calendar.set(Calendar.MONTH,9);
+      calendar.set(Calendar.DATE,12);
+      return calendar.getTime();
+  }
   public String getDate() {
     try {
       Calendar calendar = Calendar.getInstance();
@@ -164,6 +202,10 @@ public class ColumnChooserFXMLController implements Initializable {
       String dateStr = startDate.getValue() == null ? lcDate.toString() : startDate.getValue().toString();
       Date date2 = originalFormat.parse(dateStr);
       String newDate = newformat.format(date2);
+      Date date = getFirstDate();
+      if(date2.before(date)){
+        return "";
+      }
       return newDate;
     } catch (ParseException ex) {
       Logger.getLogger(ColumnChooserFXMLController.class.getName()).log(Level.SEVERE, null, ex);

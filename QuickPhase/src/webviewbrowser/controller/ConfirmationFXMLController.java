@@ -52,7 +52,7 @@ public class ConfirmationFXMLController implements Initializable {
       System.exit(0);
     } else {
       settings.showActivationDialog();
-    }
+    } 
     ((Node) (event.getSource())).getScene().getWindow().hide();
   }
 

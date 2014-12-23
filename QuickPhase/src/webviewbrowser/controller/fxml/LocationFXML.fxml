@@ -24,7 +24,7 @@
                </items>
             </ToolBar>
             <VBox maxHeight="1.7976931348623157E308" style="-fx-border-color: grey;">
-               <children>
+               <children>  
                   <Pane prefHeight="263.0" prefWidth="355.0" VBox.vgrow="ALWAYS">
                      <children>
                         <ToolBar prefHeight="234.0" prefWidth="341.0" style="-fx-background-color: #000000;">

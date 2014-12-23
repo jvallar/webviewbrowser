@@ -215,19 +215,13 @@ public class DateTimeFXMLController implements Initializable {
       DateFormat twelveFormat = new SimpleDateFormat("hh:mm a");
       if ((time.contains("AM") || time.contains("PM")) && time.length() >= 5) {
         saveClock = "12hr";
-      }else if (time.length() <= 2) {
+      } else if (time.length() <= 2) {
         saveClock = "HH";
-      } else if ((time.contains("AM") || time.contains("PM"))  && time.length() <= 4 && !time.contains(":")) {
+      } else if ((time.contains("AM") || time.contains("PM") || time.contains("am") || time.contains("pm")) && time.length() <= 4 && !time.contains(":")) {
         saveClock = "hha";
       }
-
-      if (clock.equalsIgnoreCase("24hr") && !saveClock.equalsIgnoreCase(clock)) {
-        Date date = twelveFormat.parse(time);
-        return twentyfourformat.format(date);
-      } else if (!saveClock.equalsIgnoreCase(clock)) {
-        Date date = twentyfourformat.parse(time);
-        return twelveFormat.format(date);
-      } else if (saveClock.equalsIgnoreCase("HH") && clock.equalsIgnoreCase("24hr")) {
+      
+      if (saveClock.equalsIgnoreCase("HH") && clock.equalsIgnoreCase("24hr")) {
         Date date = HOURformat.parse(time);
         return twentyfourformat.format(date);
       } else if (saveClock.equalsIgnoreCase("HH") && clock.equalsIgnoreCase("12hr")) {
@@ -238,6 +232,12 @@ public class DateTimeFXMLController implements Initializable {
         return twentyfourformat.format(date);
       } else if (saveClock.equalsIgnoreCase("hha") && clock.equalsIgnoreCase("12hr")) {
         Date date = hourformat.parse(time);
+        return twelveFormat.format(date);
+      } else if (clock.equalsIgnoreCase("24hr") && !saveClock.equalsIgnoreCase(clock)) {
+        Date date = twelveFormat.parse(time);
+        return twentyfourformat.format(date);
+      } else if (clock.equalsIgnoreCase("12hr") && !saveClock.equalsIgnoreCase(clock)) {
+        Date date = twentyfourformat.parse(time);
         return twelveFormat.format(date);
       }
     } catch (ParseException ex) {
@@ -292,6 +292,10 @@ public class DateTimeFXMLController implements Initializable {
   public void applyCommon() {
     try {
       String currentDate = getDateString();
+      if(currentDate.isEmpty()){      
+        new InformationDialog(stage, "Please select valid Date");
+        return;
+      }
 //      
 //      SimpleDateFormat labelformat = new SimpleDateFormat("EEEE, dd MMM yyyy hh:mm");
 //      Date date = labelformat.parse(currentDate);
@@ -312,7 +316,7 @@ public class DateTimeFXMLController implements Initializable {
   @FXML
   private void cancel(ActionEvent event) {
     ((Node) (event.getSource())).getScene().getWindow().hide();
-  }
+  } 
 
   @FXML
   private void delete(ActionEvent event) {
@@ -359,6 +363,15 @@ public class DateTimeFXMLController implements Initializable {
     }
   }
 
+  public Date getFirstDate(){
+    
+      Calendar calendar = Calendar.getInstance();
+      calendar.set(Calendar.YEAR, 1582);
+      calendar.set(Calendar.MONTH,9);
+      calendar.set(Calendar.DATE,12);
+      return calendar.getTime();
+  }
+  
   private String getDateString() {
     try {
       SimpleDateFormat originalFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -366,6 +379,10 @@ public class DateTimeFXMLController implements Initializable {
       String dateStr = date.getValue().toString();
       Date date2 = originalFormat.parse(dateStr);
       String newDate = newformat.format(date2);
+      Date date = getFirstDate();
+      if(date2.before(date)){
+        return "";
+      }
       return newDate;
     } catch (ParseException ex) {
       Logger.getLogger(DateTimeFXMLController.class.getName()).log(Level.SEVERE, null, ex);
@@ -394,6 +411,11 @@ public class DateTimeFXMLController implements Initializable {
         settings.storeProgramSettings();
         settings.loadProgramSettings();
         String newDate = getDateString();
+        
+      if(newDate.isEmpty()){      
+        new InformationDialog(stage, "Please select valid Date");
+        return;
+      }
         browserController.newHandleSetDateTime(newDate, txtTime.getText());
       } catch (JSONException ex) {
         Logger.getLogger(LocationFXMLController.class.getName()).log(Level.SEVERE, null, ex);
