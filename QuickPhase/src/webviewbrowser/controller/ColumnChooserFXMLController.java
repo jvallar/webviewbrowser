@@ -145,50 +145,54 @@ public class ColumnChooserFXMLController implements Initializable {
     String timOfDay = cmbTimeOfDay.getValue() == null ? "0" : cmbTimeOfDay.getValue().getData();
     String interval = rbtnHourly.isSelected() ? "hourly" : "daily";
     String date = getDate();
-    if(date.isEmpty()){      
+    if (date.isEmpty()) {
       new InformationDialog(stage, "Please select valid Date");
       return;
     }
     String numberOfResults = txtNumberDays.getText().isEmpty() ? "10" : txtNumberDays.getText();
     Integer number = Integer.parseInt(numberOfResults);
-    if(number >4000){      
+    if (number > 4000) {
       new InformationDialog(stage, "The maximumber number of results is only 4000");
       return;
     }
-    if(columns.isEmpty()){         
+    if (columns.isEmpty()) {
       new InformationDialog(stage, "Please select at least one column");
       return;
     }
-    if(settings.getProgrammSettings("default_location").isEmpty()){    
+    if (settings.getProgrammSettings("default_location").isEmpty()) {
       Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        settings.showConfigDialog("");
-      }
-    };
-    ConfirmationDialog confirmationDialog = new ConfirmationDialog(stage, "You have no default location set. Would you like to create a new location?", runnable);    
-    }else{
+        @Override
+        public void run() {
+          settings.showConfigDialog("");
+        }
+      };
+      ConfirmationDialog confirmationDialog = new ConfirmationDialog(stage, "You have no default location set. Would you like to create a new location?", runnable);
+    } else {
       browserController.setInterval(columns, dateFormat, timeFormat, timOfDay, date, numberOfResults, interval);
     }
 
     settings.setProgramSettings("hayStack", columns);
+    settings.setProgramSettings("start_date", getDate());
+    settings.setProgramSettings("column_date_format", dateFormat);
+    settings.setProgramSettings("column_time_format", timeFormat);
+    settings.setProgramSettings("column_time_day", timOfDay);
     settings.storeProgramSettings();
     settings.loadProgramSettings();
-    ((Node) (event.getSource())).getScene().getWindow().hide();
   }
-  
+
   public void setStage(Stage stage) {
     this.stage = stage;
   }
-  
-  public Date getFirstDate(){
-    
-      Calendar calendar = Calendar.getInstance();
-      calendar.set(Calendar.YEAR, 1582);
-      calendar.set(Calendar.MONTH,9);
-      calendar.set(Calendar.DATE,12);
-      return calendar.getTime();
+
+  public Date getFirstDate() {
+
+    Calendar calendar = Calendar.getInstance();
+    calendar.set(Calendar.YEAR, 1582);
+    calendar.set(Calendar.MONTH, 9);
+    calendar.set(Calendar.DATE, 12);
+    return calendar.getTime();
   }
+
   public String getDate() {
     try {
       Calendar calendar = Calendar.getInstance();
@@ -203,7 +207,7 @@ public class ColumnChooserFXMLController implements Initializable {
       Date date2 = originalFormat.parse(dateStr);
       String newDate = newformat.format(date2);
       Date date = getFirstDate();
-      if(date2.before(date)){
+      if (date2.before(date)) {
         return "";
       }
       return newDate;
@@ -233,6 +237,23 @@ public class ColumnChooserFXMLController implements Initializable {
     setCheckBox(showColumn(settings.getProgrammSettings("hayStack"), chkSetLocation), chkSetLocation);
     setCheckBox(showColumn(settings.getProgrammSettings("hayStack"), chkMoonSign), chkMoonSign);
 
+    setDate(settings.getProgrammSettings("start_date"), startDate);
+    setComboBox(settings.getProgrammSettings("column_time_format"), cmbTimeFormat);
+    setComboBox(settings.getProgrammSettings("column_date_format"), cmbDateFormat);
+    setComboBox(settings.getProgrammSettings("column_time_day"), cmbTimeOfDay);
+  }
+
+  public void setComboBox(String data, ComboBox comboBox) {
+    ObservableList<Option> list1 = comboBox.getItems();
+    for (Option option : list1) {
+      if (option.getData().equals(data)) {
+        comboBox.setValue(option);
+      }
+    }
+  }
+
+  private void setDate(String programmSettings, DatePicker datePicker) {
+    datePicker.setValue(settings.getDate(programmSettings));
   }
 
   private boolean showColumn(String hayStack, CheckBox chkbox) {
@@ -259,9 +280,31 @@ public class ColumnChooserFXMLController implements Initializable {
   }
 
   private void initializeComponents() {
-    for (int i = 1; i < 31; i++) {
-      cmbTimeOfDay.getItems().add(new Option(i + "", i + ""));
-    }
+    cmbTimeOfDay.getItems().add(new Option("-1", "Use Target Time"));
+    cmbTimeOfDay.getItems().add(new Option("0", "12 AM - Midnight (0:00)"));
+    cmbTimeOfDay.getItems().add(new Option("1", "1 AM (1:00)"));
+    cmbTimeOfDay.getItems().add(new Option("2", "2 AM (2:00)"));
+    cmbTimeOfDay.getItems().add(new Option("3", "3 AM (3:00)"));
+    cmbTimeOfDay.getItems().add(new Option("4", "4 AM (4:00)"));
+    cmbTimeOfDay.getItems().add(new Option("5", "5 AM (5:00)"));
+    cmbTimeOfDay.getItems().add(new Option("6", "6 AM (6:00)"));
+    cmbTimeOfDay.getItems().add(new Option("7", "7 AM (7:00)"));
+    cmbTimeOfDay.getItems().add(new Option("8", "8 AM (8:00)"));
+    cmbTimeOfDay.getItems().add(new Option("9", "9 AM (9:00)"));
+    cmbTimeOfDay.getItems().add(new Option("10", "10 AM (10:00)"));
+    cmbTimeOfDay.getItems().add(new Option("11", "11 AM (11:00)"));
+    cmbTimeOfDay.getItems().add(new Option("12", "12 PM - Noon (12:00)"));
+    cmbTimeOfDay.getItems().add(new Option("13", "1 PM (13:00)"));
+    cmbTimeOfDay.getItems().add(new Option("14", "2 PM (14:00)"));
+    cmbTimeOfDay.getItems().add(new Option("15", "3 PM (15:00)"));
+    cmbTimeOfDay.getItems().add(new Option("16", "4 PM (16:00)"));
+    cmbTimeOfDay.getItems().add(new Option("17", "5 PM (17:00)"));
+    cmbTimeOfDay.getItems().add(new Option("18", "6 PM (18:00)"));
+    cmbTimeOfDay.getItems().add(new Option("19", "7 PM (19:00)"));
+    cmbTimeOfDay.getItems().add(new Option("20", "8 PM (20:00)"));
+    cmbTimeOfDay.getItems().add(new Option("21", "9 PM (21:00)"));
+    cmbTimeOfDay.getItems().add(new Option("22", "10 PM (22:00)"));
+    cmbTimeOfDay.getItems().add(new Option("23", "11 PM (23:00)"));
 
     cmbTimeFormat.getItems().add(new Option("12hr", "12-hour clock (AM/PM)"));
     cmbTimeFormat.getItems().add(new Option("24hr", "24-hour clock"));

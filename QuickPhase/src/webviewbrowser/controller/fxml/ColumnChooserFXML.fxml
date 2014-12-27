@@ -72,18 +72,18 @@
             </VBox>
          </content>
       </ScrollPane>
-      <Button fx:id="btnCancel" layoutX="331.0" layoutY="455.0" mnemonicParsing="false" onAction="#cancel" text="Cancel" />
-      <Button fx:id="btnGenerate" layoutX="20.0" layoutY="455.0" mnemonicParsing="false" onAction="#apply" prefHeight="25.0" prefWidth="67.0" text="Generate" />
+      <Button fx:id="btnCancel" layoutX="259.0" layoutY="455.0" mnemonicParsing="false" onAction="#cancel" text="Close" />
+      <Button fx:id="btnGenerate" layoutX="314.0" layoutY="455.0" mnemonicParsing="false" onAction="#apply" prefHeight="25.0" prefWidth="67.0" text="Generate" />
       <Label layoutX="20.0" layoutY="14.0" text="Interval:" textFill="#c5c5c5" />
       <RadioButton fx:id="rbtnDaily" layoutX="21.0" layoutY="39.0" mnemonicParsing="false" text="Daily" textFill="#c5c5c5" />
       <RadioButton fx:id="rbtnHourly" layoutX="211.0" layoutY="39.0" mnemonicParsing="false" text="Hourly" textFill="#c5c5c5" />
       <Label layoutX="20.0" layoutY="66.0" prefHeight="17.0" prefWidth="67.0" text="Time of Day" textFill="#c5c5c5" />
-      <ComboBox fx:id="cmbTimeOfDay" layoutX="88.0" layoutY="62.0" prefHeight="25.0" prefWidth="67.0" AnchorPane.leftAnchor="88.0" />
+      <ComboBox fx:id="cmbTimeOfDay" layoutX="88.0" layoutY="62.0" prefHeight="25.0" prefWidth="129.0" AnchorPane.leftAnchor="88.0" />
       <Label layoutX="21.0" layoutY="97.0" prefHeight="17.0" prefWidth="89.0" text="Start Date:" textFill="#c5c5c5" />
       <DatePicker fx:id="startDate" layoutX="20.0" layoutY="114.0" prefHeight="25.0" prefWidth="112.0" />
       <Button fx:id="btnToday" layoutX="139.0" layoutY="114.0" mnemonicParsing="false" onAction="#getNow" prefHeight="25.0" prefWidth="57.0" text="Today" />
       <Label layoutX="209.0" layoutY="97.0" prefHeight="17.0" prefWidth="123.0" text="Number of Results" textFill="#c5c5c5" />
-      <TextField fx:id="txtNumberDays" layoutX="209.0" layoutY="114.0" prefHeight="25.0" prefWidth="89.0" />
+      <TextField fx:id="txtNumberDays" layoutX="209.0" layoutY="114.0" prefHeight="25.0" prefWidth="89.0" text="20" />
       <Label layoutX="20.0" layoutY="161.0" prefHeight="17.0" prefWidth="103.0" text="Display Columns:" textFill="#c5c5c5" />
       <Separator layoutX="21.0" layoutY="179.0" prefHeight="9.0" prefWidth="360.0" />
       <ScrollPane layoutX="20.0" layoutY="199.0" prefHeight="244.0" prefWidth="191.0">

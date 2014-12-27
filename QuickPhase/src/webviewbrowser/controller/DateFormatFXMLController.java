@@ -72,7 +72,7 @@ public class DateFormatFXMLController implements Initializable {
     cmdCalendarsTime.getItems().add(new Option("-1", "Use Target Time"));
     cmdCalendarsTime.getItems().add(new Option("0", "12 AM - Midnight (0:00)"));
     cmdCalendarsTime.getItems().add(new Option("1", "1 AM (1:00)"));
-    cmdCalendarsTime.getItems().add(new Option("2", "selected>2 AM (2:00)"));
+    cmdCalendarsTime.getItems().add(new Option("2", "2 AM (2:00)"));
     cmdCalendarsTime.getItems().add(new Option("3", "3 AM (3:00)"));
     cmdCalendarsTime.getItems().add(new Option("4", "4 AM (4:00)"));
     cmdCalendarsTime.getItems().add(new Option("5", "5 AM (5:00)"));

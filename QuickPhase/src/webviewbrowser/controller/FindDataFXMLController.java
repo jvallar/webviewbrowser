@@ -90,8 +90,8 @@ public class FindDataFXMLController implements Initializable {
       new InformationDialog(stage, "Please select valid Date");
       return;
     }
+    settings.setProgramSettings("start_from", getDate());
     browserController.setFindData(numberOfResults, month, day, name, date);
-    ((Node) (event.getSource())).getScene().getWindow().hide();
   }
 
   private void initializeComboBox() {
@@ -116,8 +116,13 @@ public class FindDataFXMLController implements Initializable {
       cmbDay.getItems().add(new Option(i + "", i + ""));
     }
 
+    setDate(settings.getProgrammSettings("start_from"), date);
   }
 
+  private void setDate(String programmSettings, DatePicker datePicker) {
+    datePicker.setValue(settings.getDate(programmSettings));
+  }
+  
   public Date getFirstDate() {
 
     Calendar calendar = Calendar.getInstance();
