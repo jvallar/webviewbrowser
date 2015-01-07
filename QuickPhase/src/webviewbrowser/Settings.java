@@ -21,12 +21,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import webviewbrowser.controller.ActivationFXMLController;
 import webviewbrowser.controller.BrowserFXMLController;
 import webviewbrowser.controller.ColumnChooserFXMLController;
@@ -59,7 +61,7 @@ public class Settings {
   String currentDatetime = "";
   String defaultLocation = "";
   String defaultDatetime = "";
-  String homeLocation ="";
+  String homeLocation = "";
   List<JSONObject> list_location;
   List<JSONObject> list_datetime;
   private DateFormatFXMLController dateFormatFXMLController;
@@ -197,7 +199,7 @@ public class Settings {
 
       currentDatetime = datetime.isEmpty() ? saveDatetime : datetime;
       defaultDatetime = saveDatetime;
-      
+
       JSONArray arrayDatetime = obj.getJSONArray("list_datetime");
       list_datetime.clear();
       for (int i = 0; i < arrayDatetime.length(); i++) {
@@ -207,10 +209,10 @@ public class Settings {
 
       JSONArray arrayLocation = obj.getJSONArray("list_location");
       list_location.clear();
-      
+
       String saveLocation = obj.getString("default_location");
       homeLocation = obj.getString("home_location");
-      currentLocation = location.isEmpty() ? saveLocation.isEmpty()?homeLocation:saveLocation: location ;
+      currentLocation = location.isEmpty() ? saveLocation.isEmpty() ? homeLocation : saveLocation : location;
       defaultLocation = saveLocation;
       for (int i = 0; i < arrayLocation.length(); i++) {
         JSONObject object = arrayLocation.getJSONObject(i);
@@ -394,6 +396,11 @@ public class Settings {
         dateTimeFXMLController.setBrowserController(browser);
         dateTimeFXMLController.setSettings(this);
         dateTimeFXMLController.setStage(stage);
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+          public void handle(WindowEvent we) {
+            browser.continueRefresh();
+          }
+        });
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.initOwner(Main.primaryStage);
         stage.setTitle("Date and Time");
@@ -407,6 +414,11 @@ public class Settings {
         locationFXMLController.setBrowserController(browser);
         locationFXMLController.setSettings(this);
         locationFXMLController.setStage(stage);
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+          public void handle(WindowEvent we) {
+            browser.continueRefresh();
+          }
+        });
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.initOwner(Main.primaryStage);
         stage.setTitle("Location");

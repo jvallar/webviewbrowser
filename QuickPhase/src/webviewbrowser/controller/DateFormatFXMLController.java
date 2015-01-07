@@ -102,7 +102,6 @@ public class DateFormatFXMLController implements Initializable {
     cmbDateFormat.getItems().add(new Option("dd/mm/yyyy", "dd/mm/yyyy"));
   }
 
-
   private void setCheckBox(String programmSettings, CheckBox chkApplyDayLightSaving) {
     chkApplyDayLightSaving.setSelected(programmSettings.equalsIgnoreCase("yes"));
   }
@@ -141,10 +140,12 @@ public class DateFormatFXMLController implements Initializable {
     settings.setProgramSettings("clock", cmbTimeFormat.getValue().getData());
     settings.storeProgramSettings();
     settings.loadProgramSettings();
+
+    browserController.restartRefresh();
   }
 
   @FXML
-  private void cancel(ActionEvent event) {    
+  private void cancel(ActionEvent event) {
     ((Node) (event.getSource())).getScene().getWindow().hide();
   }
 }

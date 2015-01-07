@@ -1103,10 +1103,10 @@ function setDateTime(d_str,t_str,noRedraw)
 	var jd = getSS('jd');
 	var d_a = new Array(), t_a = new Array();
 	if(d_str) {
-		d_a = strDt2(d_str,getSS('dt_format'),jd);
+		d_a = strDt2(d_str,getPS('dt_format'),jd);
 	}
 	if(t_str) {
-		t_a = strT(t_str,getSS('clock'));
+		t_a = strT(t_str,getPS('clock'));
 	}
 	if(!d_a || !t_a) { return false; }
 
@@ -1447,7 +1447,7 @@ function saveConfig()
 	var f = cObj.document.forms.configForm;
 	var nothing = true;
 
-	var prev_dt_format = getSS('dt_format');
+	var prev_dt_format = getPS('dt_format');
 
 	setPS( 'dt_format', getSelectedValue(f.dt_format) );
 	setPS( 'clock', getSelectedValue(f.clock) );
@@ -1552,15 +1552,15 @@ function dateFormat1(jdate)
 }
 function timeFormat1(jdate)
 {
-	return tStr2(jdate,getSS('clock'),1);
+	return tStr2(jdate,getPS('clock'),1);
 }
 function dateFieldFormat(jdate)
 {
-	return dtStr2(jdate,getSS('dt_format'));
+	return dtStr2(jdate,getPS('dt_format'));
 }
 function timeFieldFormat(jdate)
 {
-	return tStr2(jdate,getSS('clock'));
+	return tStr2(jdate,getPS('clock'));
 }
 function makeTDL()
 {
@@ -1796,15 +1796,18 @@ function startRefresh()
 	if(intervalID) {
 		clearInterval(intervalID);
 	}
-	var tx = getSS('refresh')*1000;
+	var tx = getPS('refresh')*1000;
 	// REM: the -1 (no refresh) causes no error, does no refresh; this is just-in-case
 	if(tx<0) { return; }
 	intervalID = setInterval('doRefresh()',tx);
 }
 var tmpStopRefresh = false;
+function continueRefresh(){
+ tmpStopRefresh = false;
+}
 function doRefresh()
 {
-	var tx = getSS('refresh')*SEC;
+	var tx = getPS('refresh')*SEC;
 	var jd = getSS('jd')+tx;
 
 	if(dateLimits(getSS('jd'))) {
@@ -1977,7 +1980,7 @@ function generateTable(max, month, day, phase, start){
 		return false;
 	}
 
-	var a = strDt2(start,getSS('dt_format'),getSS('jd'));
+	var a = strDt2(start,getPS('dt_format'),getSS('jd'));
 	if(!a) {
 		f.start.focus();
 		return false;
@@ -2208,8 +2211,8 @@ function getMainScreen()
 	var tz = getSS('tz');
 	var TZ_dst = DST_adj2( getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst') );
 	//alert("TZ_dst:"+TZ_dst+" tz:"+tz);
-	var dt_format = getSS('dt_format');
-	var clock = getSS('clock');
+	var dt_format = getPS('dt_format');
+	var clock = getPS('clock');
 	var Lg = dms_to_d(getSS('Lg_d'),getSS('Lg_m'),getSS('Lg_s'),getSS('Lg_dir'));
 	var Lt = dms_to_d(getSS('Lt_d'),getSS('Lt_m'),getSS('Lt_s'),getSS('Lt_dir'));
 
@@ -2244,7 +2247,7 @@ function getMainScreen()
 		&&
 		is_number(getPS('tz'))
 	) {
-		rs = getRiseSet(jd,TZ_dst,Lg,Lt,getSS('clock')); // rem: dt is used to get mjd (just passes in generic y m d h)
+		rs = getRiseSet(jd,TZ_dst,Lg,Lt,getPS('clock')); // rem: dt is used to get mjd (just passes in generic y m d h)
 		// rise pos
 		if(rs.rise_dec) {
 			var tmpDt = x_to_xms(rs.rise_dec);
@@ -2622,7 +2625,7 @@ function getDayStr(jd,jdate,Lt,Lg,loc_ok)
 
 	var rs = { rise:LocMsgAlert, set:LocMsgAlert };
 	if( loc_ok ) {
-		rs = getRiseSet(jd,TZ_dst,Lg,Lt,getSS('clock'));
+		rs = getRiseSet(jd,TZ_dst,Lg,Lt,getPS('clock'));
 	}
 
 	// temp testing:
@@ -2695,7 +2698,7 @@ function makeCalDayInfo(jdate,moon,rs,az,alt)
 	var str ="";
 	str = obj.innerHTML;
 	str = str.replace(/\|name\|/,aPN[phN(moon.D)]);
-	str = str.replace(/\|date\|/,aMs[jdate['M']-1]+" "+jdate['D']+", "+jdate['Y']+" "+tStr2(jdate,getSS('clock')));
+	str = str.replace(/\|date\|/,aMs[jdate['M']-1]+" "+jdate['D']+", "+jdate['Y']+" "+tStr2(jdate,getPS('clock')));
 	str = str.replace(/\|rise\|/,rs.rise);
 	str = str.replace(/\|set\|/,rs.set);
 	str = str.replace(/\|illum\|/,rnd(moon.phase,0)+'%');
@@ -2710,7 +2713,7 @@ function makeCalQtrInfo(jdate,moon,rs)
 	var str ="";
 	str = obj.innerHTML;
 	str = str.replace(/\|name\|/,aPN[phN(moon.D)]);
-	str = str.replace(/\|date\|/,aMs[jdate['M']-1]+" "+jdate['D']+", "+jdate['Y']+" "+tStr2(jdate,getSS('clock')));
+	str = str.replace(/\|date\|/,aMs[jdate['M']-1]+" "+jdate['D']+", "+jdate['Y']+" "+tStr2(jdate,getPS('clock')));
 	str = str.replace(/\|rise\|/,rs.rise);
 	str = str.replace(/\|set\|/,rs.set);
 	str = str.replace(/\|illum\|/,rnd(moon.phase,0)+'%');
@@ -3665,8 +3668,8 @@ function listQuartersNew( qn, month, day, jd_start, max )
   var jd = results[i].jd;
 		jdate = JD_to_date(jd);
       var TZ_dst = DST_adj2(getSS('tz'), getSS('sys_tz'), getPS('tz'), jd, getSS('apply_dst'));
-    var dt_format = getSS('dt_format');
-    var clock = getSS('clock');
+    var dt_format = getPS('dt_format');
+    var clock = getPS('clock');
     var Lg = dms_to_d(getSS('Lg_d'), getSS('Lg_m'), getSS('Lg_s'), getSS('Lg_dir'));
     var Lt = dms_to_d(getSS('Lt_d'), getSS('Lt_m'), getSS('Lt_s'), getSS('Lt_dir'));
     
@@ -3780,7 +3783,7 @@ function listQuarters( qn, month, day, jd_start, max )
 		str += '<td style="padding-left:5px">'+aMs[jdate['M']-1]+'</td>';
 		str += '<td align="right" style="padding-left:5px">'+jdate['D']+'</td>';
 		str += '<td style="padding-left:5px">'+jdate['Y']+'</td>';
-		str += '<td align="right" style="padding-left:5px">'+tStr2(jdate,getSS('clock'))+'</td>';
+		str += '<td align="right" style="padding-left:5px">'+tStr2(jdate,getPS('clock'))+'</td>';
 		str += '<td style="padding-left:5px">('+aDWs[jdate['wd']]+')</td>';
 		str += '</tr>';
 		//str += "("+count+") "+aM[results[i].dt.getMonth()]+" "+results[i].dt.getDate()+", "+results[i].dt.getFullYear()+" "+tStr(results[i].dt,getSS('clock'));
@@ -4440,11 +4443,11 @@ function debug_getSettingsStr()
 	str += "\nLg_s: "+getSS('Lg_s');
 	str += "\nLg_dir: "+getSS('Lg_dir');
 	str += "\njdate: " + getSS('jd');
-	str += "\ndt_format: " + getSS('dt_format');
-	str += "\nclock: " + getSS('clock');
+	str += "\ndt_format: " + getPS('dt_format');
+	str += "\nclock: " + getPS('clock');
 	str += "\ncal_time: " + getSS('cal_time');
 	str += "\nrefresh: " + getSS('refresh');
-	str += "\nDate: " + dtStr(getSS('jd'),getSS('dt_format')) + " " + tStr(getSS('jd'),getSS('clock'),1);
+	str += "\nDate: " + dtStr(getSS('jd'),getPS('dt_format')) + " " + tStr(getSS('jd'),getPS('clock'),1);
 	str += "\ncV: "+getSS('cV');
 	return str;
 }
@@ -4603,7 +4606,7 @@ select.style2 {
 	</tr>
 </table >
  </td>
-	<td width="20" align="center" onmouseover="mainNavOn(this)" onmouseout="mainNavOff(this)" onclick="makeScreen('config_screen');return false;"><img src="gear_wheel.png"></td>
+	<td width="20" align="center" class="mainNav" onmouseover="mainNavOn(this)" onmouseout="mainNavOff(this)" onclick="makeScreen('config_screen');return false;"><img src="gear_wheel.png"></td>
  </tr>
 </table>
 <!-- // TOP TIME/DATE/LOCATION BAR // -->
@@ -4614,13 +4617,13 @@ select.style2 {
 		<table cellpadding="0" cellspacing="0" border="0">
 			<tr>
 				<!--<td class="TDLlabel" style="padding-left:10px;padding-right:15px;color:#999999" nowrap="1">&nbsp;&nbsp;--><!--&#149;--><!--<b><div id="TDLtargetTxt" style="color:#999999"></div></b>--><!--Target<img src="icon_ptr2.gif" border="0" style="vertical-align:middle" /></td>-->
-				<td halign="center" valign="top" class="TDLlabel" style="cursor:hand;padding-left:15px;" onclick="show_f1('id_f1_date_time');return false;" nowrap="1"><img src="menu.png">&nbsp;Date & Time:&nbsp;</td>
+				<td halign="center" valign="top" class="TDLlabel" style="cursor:hand;padding-left:15px;" onclick="show_f1('id_f1_date_time');return false;" nowrap="1"><img src="edit.gif">&nbsp;Date & Time:&nbsp;</td>
 				<td halign="center" valign="top" class="TDLlabel" style="padding-right:15px;" nowrap="1"><div id="container1" style="position:relative"><div id="id_f1_date_time" style="position:absolute;left:-65px;z-index:10;visibility:hidden;background-color:#000000;padding:2px;padding-left:3px;padding-right:3px;border:1px solid orange"><input type="text" class="f1FieldStyle" name="f1_date" id="f1_date" value="" size="10" maxlength="10" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('date')">&nbsp;<input type="text" class="f1FieldStyle" name="f1_time" id="f1_time" value="" size="10" maxlength="11" onfocus="f1Focus(this)" onblur="f1Focus(this);" onkeypress="return inputCheck('time')">&nbsp;<input type="submit" class="inputBtn" name="" value="Apply" onclick="handleSetDateTime('f1_date','f1_time','id_f1_date_time');return false;">&nbsp;<input type="button" class="inputBtn" name="" value="Now" onclick="setNow();hide_f1('id_f1_date_time');return false;"></div></div><div id="TDLdateTxt" class="TDLdata"></div></td>
 
-				<td halign="center" class="TDLlabel" style="cursor:hand" onclick="show_f1('id_f1_tz');return false;" nowrap="1"><img src="menu.png">&nbsp;Time Zone:&nbsp;</td>
+				<td halign="center" class="TDLlabel" style="cursor:hand" onclick="show_f1('id_f1_tz');return false;" nowrap="1"><img src="edit.gif">&nbsp;Time Zone:&nbsp;</td>
 				<td halign="center" class="TDLlabel" style="padding-right:15px;" nowrap="1"><div id="container3" style="position:relative"><div id="id_f1_tz" style="position:absolute;left:-55px;visibility:hidden;background-color:#000000;padding:2px;padding-left:3px;padding-right:3px;border:1px solid orange"><select class="f1FieldStyle" name="f1_tz" id="f1_tz" onfocus="f1Focus(this)" onblur="f1Focus(this);"></select>&nbsp;<input type="submit" class="inputBtn" name="" value="Apply" onclick="setTZ(getSelectedValue(document.getElementById('f1_tz')));hide_f1('id_f1_tz');return false;"></div></div><div id="TDLtzTxt" class="TDLdata"></div></td>
 
-				<td halign="center" class="TDLlabel" style="cursor:hand" onclick="show_f1('id_f1_LtLg');return false;" nowrap="1"><img src="menu.png">&nbsp;Location:&nbsp;&nbsp;</td>
+				<td halign="center" class="TDLlabel" style="cursor:hand" onclick="show_f1('id_f1_LtLg');return false;" nowrap="1">&nbsp;Location:&nbsp;&nbsp;</td>
 				<td halign="center" class="TDLlabel" style="padding-right:15px;" nowrap="1"><div id="container4" style="position:relative"><div id="id_f1_LtLg" style="position:absolute;left:-80px;visibility:hidden;background-color:#000000;padding:2px;padding-left:3px;padding-right:3px;border:1px solid orange"><input type="text" name="f1_Lt_d" id="f1_Lt_d" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><input type="text" name="f1_Lt_m" id="f1_Lt_m" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><input type="text" name="f1_Lt_s" id="f1_Lt_s" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><select name="f1_Lt_dir" id="f1_Lt_dir" class="style2"><option value="N">N<option value="S">S</select>&nbsp;&nbsp;<input type="text" name="f1_Lg_d" id="f1_Lg_d" value="" size="1" class="f1FieldStyle" style="width:25px" maxlength="3" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><input type="text" name="f1_Lg_m" id="f1_Lg_m" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><input type="text" name="f1_Lg_s" id="f1_Lg_s" value="" size="1" class="f1FieldStyle" style="width:20px" maxlength="2" onfocus="f1Focus(this)" onblur="f1Focus(this)" onkeypress="return inputCheck('dig')"><select name="f1_Lg_dir" id="f1_Lg_dir" class="style2"><option value="E">E<option value="W" selected>W</select>&nbsp;<input type="submit" class="inputBtn" name="" value="Apply" onclick="setLoc(1);hide_f1('id_f1_LtLg');return false;"></div></div><div id="TDL_loc_Txt" class="TDLdata"></div></td>
 			</tr>
 		</table>

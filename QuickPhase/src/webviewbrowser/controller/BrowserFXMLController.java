@@ -250,7 +250,7 @@ public class BrowserFXMLController implements Initializable {
     jobsetting.setPageLayout(pageLayout);
     jobsetting.setPrintResolution(resolution);
     jobsetting.setPrintQuality(PrintQuality.HIGH);
-
+ 
     if (job.showPrintDialog(stage.getOwner()) && job.showPageSetupDialog(stage.getOwner())) {
       boolean success = job.printPage(webView1);
       if (success) {
@@ -263,13 +263,20 @@ public class BrowserFXMLController implements Initializable {
     this.stage = stage;
   }
 
-  
   public void setInterval(String columns, String dateFormat, String timeFormat, String timOfDay, String date, String numberOfDays, String interval) {
-    webEngine.executeScript("setInterval('" + columns+ "','" + dateFormat+ "','" + timeFormat+ "','" + timOfDay+ "','" + date+ "','" + numberOfDays+ "','" + interval+ "')");
+    webEngine.executeScript("setInterval('" + columns + "','" + dateFormat + "','" + timeFormat + "','" + timOfDay + "','" + date + "','" + numberOfDays + "','" + interval + "')");
   }
 
   public void setFindData(String number, String month, String day, String name, String date) {
-    webEngine.executeScript("setFindData('" + number+ "','" + month+ "','" + day+ "','" + name+ "','" + date+ "')");
+    webEngine.executeScript("setFindData('" + number + "','" + month + "','" + day + "','" + name + "','" + date + "')");
+  }
+
+  public void restartRefresh() {
+    webEngine.executeScript("restartRefresh()");
+  }
+
+  public void continueRefresh() {
+    webEngine.executeScript("continueRefresh()");
   }
 
 }

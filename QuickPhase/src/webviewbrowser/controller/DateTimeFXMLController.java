@@ -315,6 +315,7 @@ public class DateTimeFXMLController implements Initializable {
 
   @FXML
   private void cancel(ActionEvent event) {
+    browserController.continueRefresh();
     ((Node) (event.getSource())).getScene().getWindow().hide();
   } 
 

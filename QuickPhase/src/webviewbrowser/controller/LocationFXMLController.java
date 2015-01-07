@@ -297,7 +297,7 @@ public class LocationFXMLController implements Initializable {
 
   public void setSettings(Settings settings) {
     this.settings = settings;
-    initializeCombo();
+//    initializeCombo();
     initializeListView();
   }
 
@@ -475,6 +475,7 @@ public class LocationFXMLController implements Initializable {
 
   @FXML
   private void cancel(ActionEvent event) {
+    browserController.continueRefresh();
     ((Node) (event.getSource())).getScene().getWindow().hide();
   }
 
